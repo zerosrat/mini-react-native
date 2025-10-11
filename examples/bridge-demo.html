@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Native Bridge 通信架构演示</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+        }
+        
+        .demo-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        
+        .demo-section h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        
+        .button:hover {
+            background: #2980b9;
+        }
+        
+        .output {
+            background: #1a202c;
+            color: #68d391;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .architecture-diagram {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .layer {
+            display: inline-block;
+            width: 200px;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .js-layer { background: #f39c12; }
+        .bridge-layer { background: #e74c3c; }
+        .cpp-layer { background: #9b59b6; }
+        .native-layer { background: #27ae60; }
+        
+        .arrow {
+            font-size: 24px;
+            color: #7f8c8d;
+            margin: 0 10px;
+        }
+        
+        .flow-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>React Native Bridge 通信架构演示</h1>
+        <p>深入理解 JavaScript 和 Native 代码之间的通信机制</p>
+    </div>
+
+    <div class="demo-section">
+        <h3>🏗️ 架构概览</h3>
+        <div class="architecture-diagram">
+            <div class="flow-diagram">
+                <div class="layer js-layer">JavaScript Layer<br/>(React Native)</div>
+                <div class="arrow">↕</div>
+                <div class="layer bridge-layer">JavaScript Bridge<br/>(MessageQueue)</div>
+                <div class="arrow">↕</div>
+                <div class="layer cpp-layer">C++ Bridge Layer<br/>(JSCExecutor)</div>
+                <div class="arrow">↕</div>
+                <div class="layer native-layer">Native Module<br/>(iOS/Android)</div>
+            </div>
+        </div>
+        
+        <h4>通信流程</h4>
+        <ol>
+            <li><strong>JS → Native 调用</strong>: JavaScript 调用 NativeModules.ModuleName.methodName()</li>
+            <li><strong>消息序列化</strong>: Bridge 将调用信息序列化为 JSON</li>
+            <li><strong>C++ 传递</strong>: 通过 C++ 层传递到 Native 端</li>
+            <li><strong>Native 执行</strong>: Native 端执行对应方法</li>
+            <li><strong>结果回传</strong>: 执行结果通过相同路径回传到 JavaScript</li>
+        </ol>
+    </div>
+
+    <div class="demo-section">
+        <h3>📱 设备信息获取演示</h3>
+        <p>演示如何通过 Bridge 获取设备信息</p>
+        
+        <button class="button" onclick="getDeviceInfo()">获取设备信息</button>
+        <button class="button" onclick="getBatteryLevel()">获取电池电量</button>
+        <button class="button" onclick="getNetworkState()">获取网络状态</button>
+        
+        <div class="code-block">
+// JavaScript 调用示例
+const deviceId = await DeviceInfo.getDeviceId();
+const batteryLevel = await DeviceInfo.getBatteryLevel();
+const networkState = await DeviceInfo.getNetworkState();
+        </div>
+        
+        <div id="device-output" class="output">点击按钮查看设备信息...</div>
+    </div>
+
+    <div class="demo-section">
+        <h3>💾 异步存储演示</h3>
+        <p>演示 Native 存储模块的使用</p>
+        
+        <input type="text" id="storage-key" placeholder="输入 key" style="padding: 8px; margin: 5px;">
+        <input type="text" id="storage-value" placeholder="输入 value" style="padding: 8px; margin: 5px;">
+        <br>
+        <button class="button" onclick="setStorageItem()">存储数据</button>
+        <button class="button" onclick="getStorageItem()">读取数据</button>
+        <button class="button" onclick="removeStorageItem()">删除数据</button>
+        <button class="button" onclick="getAllKeys()">获取所有 Key</button>
+        
+        <div class="code-block">
+// 存储操作示例
+await AsyncStorage.setItem('user_name', 'React Native');
+const userName = await AsyncStorage.getItem('user_name');
+await AsyncStorage.removeItem('user_name');
+        </div>
+        
+        <div id="storage-output" class="output">存储操作结果将显示在这里...</div>
+    </div>
+
+    <div class="demo-section">
+        <h3>🔔 事件监听演示</h3>
+        <p>演示 Native 到 JavaScript 的事件推送</p>
+        
+        <button class="button" onclick="startBatteryMonitoring()">开始电池监控</button>
+        <button class="button" onclick="stopBatteryMonitoring()">停止电池监控</button>
+        <button class="button" onclick="clearEventLog()">清空日志</button>
+        
+        <div class="code-block">
+// 事件监听示例
+bridge.addEventListener('batteryLevelChanged', (data) => {
+    console.log('电池电量变化:', data);
+});
+
+await DeviceInfo.startBatteryMonitoring();
+        </div>
+        
+        <div id="event-output" class="output">事件日志将显示在这里...</div>
+    </div>
+
+    <div class="demo-section">
+        <h3>🔄 双向通信演示</h3>
+        <p>演示创建自定义通信通道</p>
+        
+        <button class="button" onclick="createChannel()">创建通道</button>
+        <button class="button" onclick="sendMessage()">发送消息</button>
+        <button class="button" onclick="closeChannel()">关闭通道</button>
+        
+        <div class="code-block">
+// 双向通信示例
+const channel = bridge.createChannel('dataSync');
+channel.onMessage((data) => {
+    console.log('收到消息:', data);
+});
+channel.send({ message: 'Hello Native!' });
+        </div>
+        
+        <div id="channel-output" class="output">通道通信日志将显示在这里...</div>
+    </div>
+
+    <div class="demo-section">
+        <h3>🔍 调试信息</h3>
+        <p>查看 Bridge 内部状态和调试信息</p>
+        
+        <button class="button" onclick="getBridgeStatus()">获取 Bridge 状态</button>
+        <button class="button" onclick="getDebugInfo()">获取调试信息</button>
+        <button class="button" onclick="clearDebugLog()">清空调试日志</button>
+        
+        <div id="debug-output" class="output">调试信息将显示在这里...</div>
+    </div>
+
+    <script>
+        // 模拟 Bridge 对象 (在实际应用中，这些会由 Native 层提供)
+        const mockBridge = {
+            isInitialized: true,
+            eventListeners: {},
+            channels: {},
+            
+            callNative: async function(module, method, args) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        // 模拟不同模块的响应
+                        if (module === 'DeviceInfo') {
+                            switch (method) {
+                                case 'getDeviceId':
+                                    resolve('device-12345-abcde');
+                                    break;
+                                case 'getBatteryLevel':
+                                    resolve({ level: 0.85, isCharging: false });
+                                    break;
+                                case 'getNetworkState':
+                                    resolve({ type: 'wifi', isConnected: true });
+                                    break;
+                                default:
+                                    resolve('Mock response for ' + method);
+                            }
+                        } else if (module === 'AsyncStorage') {
+                            const storage = localStorage;
+                            switch (method) {
+                                case 'setItem':
+                                    storage.setItem(args[0], args[1]);
+                                    resolve(true);
+                                    break;
+                                case 'getItem':
+                                    resolve(storage.getItem(args[0]));
+                                    break;
+                                case 'removeItem':
+                                    storage.removeItem(args[0]);
+                                    resolve(true);
+                                    break;
+                                case 'getAllKeys':
+                                    resolve(Object.keys(storage));
+                                    break;
+                                default:
+                                    resolve('Mock response for ' + method);
+                            }
+                        } else {
+                            resolve('Mock response from ' + module + '.' + method);
+                        }
+                    }, Math.random() * 500 + 100);
+                });
+            },
+            
+            addEventListener: function(event, callback) {
+                if (!this.eventListeners[event]) {
+                    this.eventListeners[event] = [];
+                }
+                this.eventListeners[event].push(callback);
+            },
+            
+            emit: function(event, data) {
+                if (this.eventListeners[event]) {
+                    this.eventListeners[event].forEach(callback => callback(data));
+                }
+            },
+            
+            createChannel: function(name) {
+                const channel = {
+                    name: name,
+                    onMessage: function(callback) {
+                        mockBridge.addEventListener('channel_' + name, callback);
+                    },
+                    send: function(data) {
+                        logOutput('channel-output', `[发送] ${JSON.stringify(data)}`);
+                        // 模拟 Native 回复
+                        setTimeout(() => {
+                            mockBridge.emit('channel_' + name, {
+                                type: 'reply',
+                                message: 'Native received: ' + JSON.stringify(data),
+                                timestamp: Date.now()
+                            });
+                        }, 200);
+                    },
+                    close: function() {
+                        delete mockBridge.channels[name];
+                        logOutput('channel-output', `[关闭] 通道 ${name} 已关闭`);
+                    }
+                };
+                this.channels[name] = channel;
+                return channel;
+            }
+        };
+
+        let currentChannel = null;
+        let batteryMonitoringInterval = null;
+
+        function logOutput(elementId, message) {
+            const output = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            output.textContent += `[${timestamp}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        // 设备信息相关函数
+        async function getDeviceInfo() {
+            try {
+                const deviceId = await mockBridge.callNative('DeviceInfo', 'getDeviceId', []);
+                logOutput('device-output', `设备 ID: ${deviceId}`);
+            } catch (error) {
+                logOutput('device-output', `错误: ${error.message}`);
+            }
+        }
+
+        async function getBatteryLevel() {
+            try {
+                const battery = await mockBridge.callNative('DeviceInfo', 'getBatteryLevel', []);
+                logOutput('device-output', `电池电量: ${JSON.stringify(battery)}`);
+            } catch (error) {
+                logOutput('device-output', `错误: ${error.message}`);
+            }
+        }
+
+        async function getNetworkState() {
+            try {
+                const network = await mockBridge.callNative('DeviceInfo', 'getNetworkState', []);
+                logOutput('device-output', `网络状态: ${JSON.stringify(network)}`);
+            } catch (error) {
+                logOutput('device-output', `错误: ${error.message}`);
+            }
+        }
+
+        // 存储相关函数
+        async function setStorageItem() {
+            const key = document.getElementById('storage-key').value;
+            const value = document.getElementById('storage-value').value;
+            
+            if (!key || !value) {
+                logOutput('storage-output', '请输入 key 和 value');
+                return;
+            }
+            
+            try {
+                await mockBridge.callNative('AsyncStorage', 'setItem', [key, value]);
+                logOutput('storage-output', `存储成功: ${key} = ${value}`);
+            } catch (error) {
+                logOutput('storage-output', `存储失败: ${error.message}`);
+            }
+        }
+
+        async function getStorageItem() {
+            const key = document.getElementById('storage-key').value;
+            
+            if (!key) {
+                logOutput('storage-output', '请输入 key');
+                return;
+            }
+            
+            try {
+                const value = await mockBridge.callNative('AsyncStorage', 'getItem', [key]);
+                logOutput('storage-output', `读取结果: ${key} = ${value || 'null'}`);
+            } catch (error) {
+                logOutput('storage-output', `读取失败: ${error.message}`);
+            }
+        }
+
+        async function removeStorageItem() {
+            const key = document.getElementById('storage-key').value;
+            
+            if (!key) {
+                logOutput('storage-output', '请输入 key');
+                return;
+            }
+            
+            try {
+                await mockBridge.callNative('AsyncStorage', 'removeItem', [key]);
+                logOutput('storage-output', `删除成功: ${key}`);
+            } catch (error) {
+                logOutput('storage-output', `删除失败: ${error.message}`);
+            }
+        }
+
+        async function getAllKeys() {
+            try {
+                const keys = await mockBridge.callNative('AsyncStorage', 'getAllKeys', []);
+                logOutput('storage-output', `所有 Key: ${JSON.stringify(keys)}`);
+            } catch (error) {
+                logOutput('storage-output', `获取失败: ${error.message}`);
+            }
+        }
+
+        // 事件监听相关函数
+        function startBatteryMonitoring() {
+            if (batteryMonitoringInterval) {
+                logOutput('event-output', '电池监控已在运行中');
+                return;
+            }
+            
+            logOutput('event-output', '开始电池监控...');
+            
+            // 监听电池事件
+            mockBridge.addEventListener('batteryLevelChanged', (data) => {
+                logOutput('event-output', `电池事件: ${JSON.stringify(data)}`);
+            });
+            
+            // 模拟电池电量变化
+            batteryMonitoringInterval = setInterval(() => {
+                const mockBatteryData = {
+                    level: (Math.random() * 0.3 + 0.7).toFixed(2), // 70-100%
+                    isCharging: Math.random() > 0.7,
+                    timestamp: Date.now()
+                };
+                mockBridge.emit('batteryLevelChanged', mockBatteryData);
+            }, 3000);
+        }
+
+        function stopBatteryMonitoring() {
+            if (batteryMonitoringInterval) {
+                clearInterval(batteryMonitoringInterval);
+                batteryMonitoringInterval = null;
+                logOutput('event-output', '电池监控已停止');
+            } else {
+                logOutput('event-output', '电池监控未在运行');
+            }
+        }
+
+        function clearEventLog() {
+            document.getElementById('event-output').textContent = '';
+        }
+
+        // 双向通信相关函数
+        function createChannel() {
+            if (currentChannel) {
+                logOutput('channel-output', '通道已存在，请先关闭当前通道');
+                return;
+            }
+            
+            currentChannel = mockBridge.createChannel('demo-channel');
+            
+            currentChannel.onMessage((data) => {
+                logOutput('channel-output', `[接收] ${JSON.stringify(data)}`);
+            });
+            
+            logOutput('channel-output', '[创建] 通道已创建');
+        }
+
+        function sendMessage() {
+            if (!currentChannel) {
+                logOutput('channel-output', '请先创建通道');
+                return;
+            }
+            
+            const message = {
+                type: 'greeting',
+                message: 'Hello from JavaScript!',
+                timestamp: Date.now()
+            };
+            
+            currentChannel.send(message);
+        }
+
+        function closeChannel() {
+            if (currentChannel) {
+                currentChannel.close();
+                currentChannel = null;
+            } else {
+                logOutput('channel-output', '没有打开的通道');
+            }
+        }
+
+        // 调试相关函数
+        function getBridgeStatus() {
+            const status = {
+                isInitialized: mockBridge.isInitialized,
+                eventListeners: Object.keys(mockBridge.eventListeners),
+                channels: Object.keys(mockBridge.channels)
+            };
+            logOutput('debug-output', `Bridge 状态: ${JSON.stringify(status, null, 2)}`);
+        }
+
+        function getDebugInfo() {
+            const debugInfo = {
+                timestamp: new Date().toISOString(),
+                bridge: {
+                    initialized: mockBridge.isInitialized,
+                    eventListenerCount: Object.keys(mockBridge.eventListeners).length,
+                    channelCount: Object.keys(mockBridge.channels).length
+                },
+                demo: {
+                    batteryMonitoring: !!batteryMonitoringInterval,
+                    currentChannel: currentChannel ? currentChannel.name : null
+                }
+            };
+            logOutput('debug-output', `调试信息: ${JSON.stringify(debugInfo, null, 2)}`);
+        }
+
+        function clearDebugLog() {
+            document.getElementById('debug-output').textContent = '';
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            logOutput('debug-output', 'React Native Bridge 演示页面已加载');
+            logOutput('debug-output', '这是一个模拟演示，展示了 Bridge 的各种功能');
+        });
+    </script>
+</body>
+</html>
