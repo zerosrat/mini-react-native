@@ -69,118 +69,145 @@
   - 实现调试信息的收集和展示
   - 支持 JavaScript 代码的源码映射
 
-### 任务2: MessageQueue 机制完善
+### 任务2: MessageQueue 从零实现
 
-**目标：** 实现与 React Native 完全一致的消息队列机制
+**目标：** 从零开始实现与 React Native 完全一致的消息队列机制
 
-#### 子任务 2.1: 移除模拟逻辑
+#### 子任务 2.1: 核心 MessageQueue 架构设计
 
-- [ ] **删除模拟代码**
-  - 移除 `_simulateNativeResponse` 方法
-  - 移除 `setTimeout` 模拟异步调用
-  - 确保所有调用都通过真实的 Native 通道
+- [ ] **设计消息队列数据结构**
+  - 定义调用队列格式：`[moduleId, methodId, args]`
+  - 设计回调管理机制和回调ID生成策略
+  - 规划模块注册表结构和方法ID映射
 
-- [ ] **连接真实通信**
-  - `callNativeMethod` 直接调用 C++ Bridge
-  - `flushedQueue` 返回真实的待处理队列
-  - `invokeCallbackAndReturnFlushedQueue` 处理真实的回调
-
-#### 子任务 2.2: 消息格式标准化
-
-- [ ] **调用队列格式**
+- [ ] **实现基础 MessageQueue 类**
 
   ```javascript
-  // 确保格式与 RN 一致
-  [
-    [moduleId, methodId, args],  // 第一个调用
-    [moduleId, methodId, args],  // 第二个调用
-    // ...
-  ]
+  class MessageQueue {
+    constructor()                     // 初始化队列和回调表
+    registerModule(moduleConfig)      // 注册 Native 模块
+    callNativeMethod(...)            // 调用 Native 方法
+    flushedQueue()                   // 获取待处理队列
+    invokeCallbackAndReturnFlushedQueue(callbackId, args)  // 处理回调
+  }
   ```
 
-- [ ] **回调机制优化**
-  - 回调 ID 的生成和管理
-  - 回调函数的及时清理
-  - 错误回调和成功回调的区分
+- [ ] **建立与 C++ Bridge 的接口规范**
+  - 定义 JavaScript 全局函数接口
+  - 设计数据序列化和反序列化格式
+  - 确定错误传播和异常处理机制
 
-- [ ] **批量调用优化**
-  - 合并多个同步调用
-  - 减少 Bridge 穿越次数
-  - 实现智能的队列刷新策略
+#### 子任务 2.2: 与 C++ Bridge 集成实现
 
-#### 子任务 2.3: 性能监控
+- [ ] **实现 Native 函数调用接口**
+  - 调用 C++ 的 `__nativeFlushQueuedReactWork` 函数
+  - 处理 Native 到 JS 的回调机制
+  - 实现队列的序列化和反序列化
 
-- [ ] **调用统计**
+- [ ] **建立真实通信通道**
+
+  ```javascript
+  // 替换模拟逻辑，实现真实调用
+  callNativeMethod(moduleName, methodName, args, onSuccess, onFail) {
+    // 直接调用 global.__nativeFlushQueuedReactWork()
+    // 处理异步回调和错误
+  }
+  ```
+
+- [ ] **错误处理和异常管理**
+  - JavaScript 异常的捕获和传播
+  - Native 调用失败的处理机制
+  - 回调超时和清理机制
+  - 优雅的错误恢复策略
+
+#### 子任务 2.3: 调试和性能优化
+
+- [ ] **添加调试功能**
+  - 详细的调用日志和跟踪信息
+  - 队列状态的实时监控
+  - 回调执行的生命周期跟踪
+
+- [ ] **性能监控实现**
   - 记录每次 Bridge 调用的耗时
   - 统计调用频率和数据大小
-  - 识别性能瓶颈
+  - 识别性能瓶颈和优化点
 
-- [ ] **内存管理**
-  - 及时释放已完成的回调
-  - 避免内存泄漏
-  - 监控 JavaScript 对象的生命周期
+- [ ] **错误追踪和报告**
+  - 实现错误收集和分类机制
+  - 提供调试信息的格式化输出
+  - 建立错误恢复和重试机制
 
-### 任务3: Native 模块系统完善
+### 任务3: Native 模块系统从零实现
 
-**目标：** 实现完整的 Native 模块注册和调用机制
+**目标：** 从零开始实现完整的 Native 模块注册和调用机制
 
-#### 子任务 3.1: 模块注册系统
+#### 子任务 3.1: C++ 模块框架设计
 
-- [ ] **模块描述符标准化**
+- [ ] **设计 NativeModule 基类**
 
   ```cpp
-  // 确保与 RN 格式一致
-  struct NativeMethodDescriptor {
-      std::string name;
-      std::vector<std::string> paramTypes;
-      bool isPromise;
-      bool isSync;
+  // 从零设计模块基类架构
+  class NativeModule {
+  public:
+      virtual std::string getName() const = 0;
+      virtual std::vector<std::string> getMethods() const = 0;
+      virtual std::string getMethodsJSON() const = 0;
+      virtual std::string callMethod(const std::string& method, const std::string& args) = 0;
+      virtual ~NativeModule() = default;
   };
   ```
 
-- [ ] **动态模块注册**
-  - 支持运行时模块注册
+- [ ] **实现模块注册机制**
+  - 模块ID分配和管理系统
+  - 方法ID映射表的建立
   - 模块配置的验证和错误处理
-  - 模块方法的自动发现
 
-- [ ] **模块生命周期管理**
-  - 模块的初始化和销毁
-  - 模块间的依赖关系
-  - 模块状态的监控
+- [ ] **建立模块生命周期管理**
+  - 模块的初始化和销毁流程
+  - 模块状态的监控和调试
+  - 模块间通信和依赖管理
 
-#### 子任务 3.2: iOS DeviceInfo 模块完善
+#### 子任务 3.2: 从零实现 DeviceInfo 模块
 
-- [ ] **真实 API 集成**
-  - 使用真实的 iOS API 获取设备信息
-  - 实现电池监控功能
-  - 添加网络状态监听
+- [ ] **创建 DeviceInfoModule 类**
+  - 继承 NativeModule 基类
+  - 实现基础设备信息获取框架
+  - 建立方法注册和调用机制
 
-- [ ] **事件发送机制**
-  - 从 Native 向 JavaScript 发送事件
-  - 事件数据的序列化
-  - 事件监听器的管理
+- [ ] **实现核心设备信息方法**
 
-- [ ] **权限处理**
-  - 检查和请求必要权限
-  - 处理权限拒绝的情况
-  - 提供友好的错误提示
+  ```cpp
+  // macOS/iOS 平台实现
+  std::string getDeviceId();           // 获取设备唯一标识
+  std::string getSystemVersion();      // 获取系统版本
+  std::string getDeviceModel();        // 获取设备型号
+  double getBatteryLevel();            // 获取电池电量
+  std::string getNetworkType();        // 获取网络类型
+  ```
 
-#### 子任务 3.3: Android DeviceInfo 模块完善
+- [ ] **添加系统 API 集成**
+  - 使用 macOS/iOS 系统 API 获取真实设备信息
+  - 处理权限检查和错误情况
+  - 实现数据格式化和序列化
 
-- [ ] **JNI 集成完善**
-  - 完成 `DeviceInfoHelper.java` 的实现
-  - 建立 C++ 与 Java 的双向通信
-  - 处理 JNI 异常和内存管理
+#### 子任务 3.3: 事件系统实现
 
-- [ ] **Android API 使用**
-  - 获取设备信息（型号、版本等）
-  - 监听电池状态变化
-  - 检测网络连接状态
+- [ ] **Native 到 JS 事件推送机制**
+  - 实现事件分发器和事件队列
+  - 建立事件监听器管理系统
+  - 支持异步事件推送到 JavaScript
 
-- [ ] **广播接收器**
-  - 注册系统广播监听器
-  - 将系统事件转发到 JavaScript
-  - 管理监听器的生命周期
+- [ ] **事件数据处理**
+  - 实现事件数据的序列化机制
+  - 处理复杂数据类型的事件参数
+  - 确保事件数据的完整性和安全性
+
+- [ ] **集成测试和验证**
+  - 实现设备状态变化事件（如电池电量变化）
+  - 测试事件的实时推送和接收
+  - 验证事件系统的稳定性和性能
+
+**注：Android 支持将在后续阶段实现，优先保证 macOS/iOS 平台的完整功能**
 
 ### 任务4: 集成测试和验证
 
@@ -320,14 +347,35 @@
 
 ## ⏱️ 时间规划
 
-| 任务 | 预估时间 | 依赖关系 |
-|------|---------|----------|
-| 任务1: JSCExecutor 集成 | 5-7 天 | 无 |
-| 任务2: MessageQueue 完善 | 3-4 天 | 依赖任务1 |
-| 任务3: Native 模块完善 | 4-5 天 | 依赖任务1 |
-| 任务4: 集成测试验证 | 2-3 天 | 依赖任务2,3 |
+| 任务 | 预估时间 | 调整后时间 | 依赖关系 |
+|------|---------|-----------|----------|
+| 任务1: JSCExecutor 集成 | 5-7 天 | **7-10 天** | 无 |
+| 任务2: MessageQueue 从零实现 | 3-4 天 | **4-6 天** | 依赖任务1 |
+| 任务3: Native 模块从零实现 | 4-5 天 | **5-7 天** | 依赖任务1 |
+| 任务4: 集成测试验证 | 2-3 天 | **3-4 天** | 依赖任务2,3 |
 
-**总计: 14-19 天**
+**原计划总计: 14-19 天**
+**调整后总计: 19-27 天**
+
+### 📋 分阶段执行建议
+
+**Phase 1A: 基础通信建立** (7-10天)
+
+- JSCExecutor 基础实现 (macOS环境)
+- 最简 MessageQueue 实现
+- Hello World 级别的 JS ↔ C++ 通信验证
+
+**Phase 1B: 核心功能完善** (6-8天)
+
+- MessageQueue 完整实现 (回调、错误处理)
+- DeviceInfo 模块实现 (macOS/iOS平台)
+- 基础集成测试
+
+**Phase 1C: 完善和优化** (6-9天)
+
+- 事件系统实现
+- 性能优化和错误处理完善
+- 完整功能测试和验证
 
 ## 🚀 下一步计划
 
