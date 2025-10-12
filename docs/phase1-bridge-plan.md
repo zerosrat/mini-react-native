@@ -10,254 +10,205 @@
 - ✅ Native 可以向 JavaScript 发送事件和数据
 - ✅ 错误处理机制正常工作
 - ✅ 通信性能达到可接受水平
-- ✅ 完全移除模拟逻辑，使用真实的通信机制
+- ✅ 建立真实的 JavaScriptCore 执行环境和通信机制
 
 ## 📋 详细任务分解
 
-### 任务1: 真实 JSCExecutor 集成
+### 任务1: 构建 RN 风格的 JSCExecutor
 
-**目标：** 替换当前的模拟实现，集成真实的 JavaScriptCore 引擎
+**目标：** 按照 React Native JSCExecutor 的设计思路，构建兼容的 JavaScript 执行环境
 
-#### 子任务 1.1: JavaScriptCore 环境配置
+**架构约束：**
 
-- [ ] **iOS 平台配置**
-  - 在 Xcode 项目中链接 JavaScriptCore.framework
-  - 配置头文件搜索路径
+- 严格遵循 RN JSCExecutor 的接口设计和生命周期管理
+- JavaScript 上下文管理方式与 RN 保持一致
+- Native 函数注入机制模仿 RN 的实现模式
+
+#### 子任务 1.1: 项目基础架构搭建 (0.5天)
+
+- [ ] **跨平台构建系统设置**
+  - 配置 CMake 构建脚本支持 macOS (优先)
+  - 建立统一的头文件和库文件管理
+  - 创建基础目录结构
+
+- [ ] **基础工程文件创建**
+  - 创建 macOS 项目文件
+  - 配置编译选项和依赖管理
+  - 建立测试框架基础
+
+#### 子任务 1.2: JavaScriptCore 环境配置 (1天)
+
+- [ ] **macOS JSC 环境配置** (优先实现)
+  - 链接系统 JavaScriptCore.framework
+  - 创建跨平台的 JSC 接口抽象层
   - 验证 JSC API 可用性
 
-- [ ] **Android 平台配置**
-  - 配置 NDK 构建环境
-  - 集成 JavaScriptCore 静态库或使用系统 JSC
-  - 配置 CMakeLists.txt
+- [ ] **基础验证**
+  - 编写简单的 "Hello World" JS 执行测试
+  - 确保构建系统正常工作
 
-- [ ] **macOS 开发环境**
-  - 使用系统 JavaScriptCore 进行开发和测试
-  - 配置 Makefile 的编译选项
+#### 子任务 1.3: JSCExecutor 核心实现 (1天)
 
-#### 子任务 1.2: JSCExecutor 核心功能实现
-
-- [ ] **JavaScript 上下文管理**
+- [ ] **JSCExecutor 类设计 (参照 RN 接口)**
 
   ```cpp
-  // 需要实现的关键方法
-  bool JSCExecutor::initialize()
-  JSExecuteResult JSCExecutor::executeScript(const std::string& script, const std::string& sourceURL)
-  JSExecuteResult JSCExecutor::callJSFunction(const std::string& functionName, const std::string& arguments)
+  // 参照 React Native JSCExecutor 设计
+  class JSCExecutor {
+  public:
+      void loadApplicationScript(const std::string& script, const std::string& sourceURL);
+      void setJSExceptionHandler(std::function<void(const std::string&)> handler);
+      void callJSFunction(const std::string& module, const std::string& method, const std::string& arguments);
+      void installGlobalFunction(const std::string& name, JSObjectCallAsFunctionCallback callback);
+      void destroy();
+  };
   ```
 
-- [ ] **Native 函数注入**
-  - 实现 `__nativeFlushQueuedReactWork` 函数
-  - 实现 `__nativeCallSyncHook` 函数
-  - 实现 `__nativeLoggingHook` 函数
-  - 确保 JS 环境可以调用这些函数
+- [ ] **JavaScript 上下文管理 (RN 风格)**
+  - 按照 RN 的方式创建和配置 JSContext
+  - 实现 RN 风格的全局对象注入 (global, **DEV**, console 等)
+  - 异常处理机制与 RN 保持一致
 
-- [ ] **数据类型转换**
-  - 实现 JavaScript 值到 C++ 字符串的转换
-  - 实现 C++ 数据到 JavaScript 值的转换
-  - 处理 JSON 序列化和反序列化
-  - 支持数组、对象、基本类型的转换
+- [ ] **数据类型转换 (RN 兼容)**
+  - 实现与 RN 一致的 JSValue ↔ JSON 转换
+  - 支持 RN 标准的参数序列化格式
 
-#### 子任务 1.3: 异常处理和调试
+#### 子任务 1.4: RN 标准 Native 函数注入 (0.5天)
 
-- [ ] **异常捕获机制**
-  - JavaScript 异常的捕获和传播
-  - C++ 异常的处理和日志记录
-  - 优雅的错误恢复机制
+- [ ] **RN Bridge 关键函数注入**
+  - 实现 `__nativeFlushQueuedReactWork(moduleIds, methodIds, params, callbacks)`
+  - 实现 `__nativeCallSyncHook(moduleId, methodId, args)`
+  - 实现 `__nativeLoggingHook(level, message)`
+  - 确保函数签名与 RN 完全一致
 
-- [ ] **调试支持**
-  - 添加详细的日志输出
-  - 实现调试信息的收集和展示
-  - 支持 JavaScript 代码的源码映射
+- [ ] **RN 风格异常处理**
+  - 实现 RN 标准的 JavaScript 异常处理机制
+  - 错误信息格式与 RN 保持一致
 
-### 任务2: MessageQueue 从零实现
+### 任务2: RN 兼容的 MessageQueue 实现
 
-**目标：** 从零开始实现与 React Native 完全一致的消息队列机制
+**目标：** 严格按照 React Native MessageQueue.js 的设计实现兼容的消息队列机制
 
-#### 子任务 2.1: 核心 MessageQueue 架构设计
+**架构约束：**
 
-- [ ] **设计消息队列数据结构**
-  - 定义调用队列格式：`[moduleId, methodId, args]`
-  - 设计回调管理机制和回调ID生成策略
-  - 规划模块注册表结构和方法ID映射
+- 消息队列格式必须与 RN 完全一致：`[moduleIds, methodIds, params, callbackIds]`
+- 回调管理机制遵循 RN 的实现逻辑
+- 模块注册和方法映射方式与 RN 保持一致
 
-- [ ] **实现基础 MessageQueue 类**
+#### 子任务 2.1: RN 标准 MessageQueue 实现 (1.5天)
+
+- [ ] **MessageQueue 类 (严格按照 RN 设计)**
 
   ```javascript
+  // 完全参照 React Native MessageQueue.js
   class MessageQueue {
-    constructor()                     // 初始化队列和回调表
-    registerModule(moduleConfig)      // 注册 Native 模块
-    callNativeMethod(...)            // 调用 Native 方法
-    flushedQueue()                   // 获取待处理队列
-    invokeCallbackAndReturnFlushedQueue(callbackId, args)  // 处理回调
+    constructor()                    // 初始化队列和回调表
+    registerLazyCallableModule(name, factory) // 注册延迟加载模块
+    callNativeMethod(moduleID, methodID, params, onFail, onSucc) // 调用 Native 方法
+    flushedQueue()                  // 获取并清空待处理队列
+    invokeCallbackAndReturnFlushedQueue(cbID, args) // 执行回调并返回队列
+    getEventLoopRunningTime()       // 获取事件循环运行时间
   }
   ```
 
-- [ ] **建立与 C++ Bridge 的接口规范**
-  - 定义 JavaScript 全局函数接口
-  - 设计数据序列化和反序列化格式
-  - 确定错误传播和异常处理机制
+- [ ] **RN 标准消息队列格式**
+  - 严格实现 `[moduleIds, methodIds, params, callbackIds]` 格式
+  - 回调ID生成和管理与 RN 完全一致
+  - 模块注册表结构与 RN 保持一致
 
-#### 子任务 2.2: 与 C++ Bridge 集成实现
+#### 子任务 2.2: RN 标准 Bridge 集成 (1天)
 
-- [ ] **实现 Native 函数调用接口**
-  - 调用 C++ 的 `__nativeFlushQueuedReactWork` 函数
-  - 处理 Native 到 JS 的回调机制
-  - 实现队列的序列化和反序列化
+- [ ] **RN Bridge 函数完整实现**
+  - 完整实现 `__nativeFlushQueuedReactWork(moduleIds, methodIds, params, callbacks)`
+  - 消息格式处理与 RN 完全一致
+  - 支持 RN 标准的批量调用机制
 
-- [ ] **建立真实通信通道**
+- [ ] **RN 兼容回调机制**
+  - 实现与 RN 一致的回调ID管理
+  - 支持成功/失败双回调模式
+  - 回调执行时机与 RN 保持一致
 
-  ```javascript
-  // 替换模拟逻辑，实现真实调用
-  callNativeMethod(moduleName, methodName, args, onSuccess, onFail) {
-    // 直接调用 global.__nativeFlushQueuedReactWork()
-    // 处理异步回调和错误
-  }
-  ```
+#### 子任务 2.3: 基础调试支持 (0.5天)
 
-- [ ] **错误处理和异常管理**
-  - JavaScript 异常的捕获和传播
-  - Native 调用失败的处理机制
-  - 回调超时和清理机制
-  - 优雅的错误恢复策略
+- [ ] **简单的调试功能**
+  - 基础的调用日志
+  - 错误信息的格式化输出
 
-#### 子任务 2.3: 调试和性能优化
+### 任务3: RN 兼容的 Native 模块系统
 
-- [ ] **添加调试功能**
-  - 详细的调用日志和跟踪信息
-  - 队列状态的实时监控
-  - 回调执行的生命周期跟踪
+**目标：** 严格按照 React Native 的 NativeModule 机制实现兼容的模块系统
 
-- [ ] **性能监控实现**
-  - 记录每次 Bridge 调用的耗时
-  - 统计调用频率和数据大小
-  - 识别性能瓶颈和优化点
+**架构约束：**
 
-- [ ] **错误追踪和报告**
-  - 实现错误收集和分类机制
-  - 提供调试信息的格式化输出
-  - 建立错误恢复和重试机制
+- 模块注册方式必须与 RN 的 NativeModule 机制一致
+- 方法导出和调用方式遵循 RN 的模式 (反射机制)
+- 事件系统按照 RN 的 RCTEventEmitter 思路实现
 
-### 任务3: Native 模块系统从零实现
+#### 子任务 3.1: RN 标准模块框架 (1天)
 
-**目标：** 从零开始实现完整的 Native 模块注册和调用机制
-
-#### 子任务 3.1: C++ 模块框架设计
-
-- [ ] **设计 NativeModule 基类**
+- [ ] **NativeModule 基类设计 (参照 RN 接口)**
 
   ```cpp
-  // 从零设计模块基类架构
+  // 严格参照 React Native NativeModule 设计
   class NativeModule {
   public:
       virtual std::string getName() const = 0;
       virtual std::vector<std::string> getMethods() const = 0;
-      virtual std::string getMethodsJSON() const = 0;
-      virtual std::string callMethod(const std::string& method, const std::string& args) = 0;
+      virtual std::map<std::string, std::string> getConstants() const = 0;
+      virtual void invoke(const std::string& methodName, const std::string& args,
+                         std::function<void(const std::string&)> callback) = 0;
+      virtual bool supportsWebWorkers() const { return false; }
       virtual ~NativeModule() = default;
   };
   ```
 
-- [ ] **实现模块注册机制**
-  - 模块ID分配和管理系统
-  - 方法ID映射表的建立
-  - 模块配置的验证和错误处理
+- [ ] **RN 兼容模块注册机制**
+  - 模块ID分配方式与 RN 一致
+  - 方法ID映射表符合 RN 标准
+  - 支持 RN 风格的模块配置导出
 
-- [ ] **建立模块生命周期管理**
-  - 模块的初始化和销毁流程
-  - 模块状态的监控和调试
-  - 模块间通信和依赖管理
+#### 子任务 3.2: RN 风格 DeviceInfo 模块 (1.5天)
 
-#### 子任务 3.2: 从零实现 DeviceInfo 模块
-
-- [ ] **创建 DeviceInfoModule 类**
+- [ ] **DeviceInfoModule 类 (参照 RN DeviceInfo)**
   - 继承 NativeModule 基类
-  - 实现基础设备信息获取框架
-  - 建立方法注册和调用机制
+  - 实现 RN 标准的模块配置导出
+  - 方法调用方式与 RN DeviceInfo 保持一致
 
-- [ ] **实现核心设备信息方法**
+- [ ] **RN 兼容的设备信息方法 (macOS 优先)**
 
   ```cpp
-  // macOS/iOS 平台实现
-  std::string getDeviceId();           // 获取设备唯一标识
-  std::string getSystemVersion();      // 获取系统版本
-  std::string getDeviceModel();        // 获取设备型号
-  double getBatteryLevel();            // 获取电池电量
-  std::string getNetworkType();        // 获取网络类型
+  // 参照 react-native-device-info 的接口
+  void getUniqueId(std::function<void(const std::string&)> callback);
+  void getSystemVersion(std::function<void(const std::string&)> callback);
+  void getModel(std::function<void(const std::string&)> callback);
+  std::map<std::string, std::string> getConstants(); // 返回设备常量
   ```
 
-- [ ] **添加系统 API 集成**
-  - 使用 macOS/iOS 系统 API 获取真实设备信息
-  - 处理权限检查和错误情况
-  - 实现数据格式化和序列化
+#### 子任务 3.3: RN 风格事件系统 (0.5天)
 
-#### 子任务 3.3: 事件系统实现
+- [ ] **RCTEventEmitter 风格事件推送**
+  - 实现与 RN RCTEventEmitter 一致的事件分发机制
+  - 支持 RN 标准的事件订阅/取消订阅
+  - 事件数据格式与 RN 保持一致
 
-- [ ] **Native 到 JS 事件推送机制**
-  - 实现事件分发器和事件队列
-  - 建立事件监听器管理系统
-  - 支持异步事件推送到 JavaScript
+### 任务4: 基础集成测试
 
-- [ ] **事件数据处理**
-  - 实现事件数据的序列化机制
-  - 处理复杂数据类型的事件参数
-  - 确保事件数据的完整性和安全性
+**目标：** 验证基础通信功能正常工作
 
-- [ ] **集成测试和验证**
-  - 实现设备状态变化事件（如电池电量变化）
-  - 测试事件的实时推送和接收
-  - 验证事件系统的稳定性和性能
+#### 子任务 4.1: 端到端通信验证 (1天)
 
-**注：Android 支持将在后续阶段实现，优先保证 macOS/iOS 平台的完整功能**
-
-### 任务4: 集成测试和验证
-
-**目标：** 确保整个通信链路正常工作
-
-#### 子任务 4.1: 基础通信测试
-
-- [ ] **简单方法调用**
-  - JavaScript 调用获取设备 ID
+- [ ] **基础功能测试**
+  - JavaScript 调用 DeviceInfo 模块方法
   - 验证返回值的正确性
-  - 测试错误情况的处理
+  - 测试基础错误处理
 
-- [ ] **异步调用测试**
-  - 测试 Promise 化的接口
-  - 验证回调的正确执行
-  - 测试并发调用的处理
-
-- [ ] **事件推送测试**
-  - 触发 Native 事件
+- [ ] **事件系统测试**
+  - 触发一个 Native 事件
   - 验证 JavaScript 端接收
-  - 测试事件数据的完整性
+  - 确保数据传递正确
 
-#### 子任务 4.2: 性能测试
-
-- [ ] **调用延迟测试**
-  - 测量单次调用的平均延迟
-  - 对比不同数据大小的影响
-  - 分析 JSON 序列化的开销
-
-- [ ] **并发性能测试**
-  - 测试高频调用的处理能力
-  - 验证队列机制的稳定性
-  - 检查内存使用情况
-
-- [ ] **稳定性测试**
-  - 长时间运行测试
-  - 异常情况的恢复测试
-  - 内存泄漏检测
-
-#### 子任务 4.3: 对比验证
-
-- [ ] **与 React Native 对比**
-  - 对比消息格式的一致性
-  - 验证行为的兼容性
-  - 记录差异和原因
-
-- [ ] **性能基准对比**
-  - 与官方 RN 的性能对比
-  - 分析性能差距的原因
-  - 制定优化计划
+- [ ] **简单性能验证**
+  - 测量基础调用延迟 (目标 < 10ms)
+  - 验证内存使用基本稳定
 
 ## 🔧 技术要点和难点
 
@@ -302,11 +253,20 @@
 
 ## 📝 验收标准
 
+### RN 兼容性验收 (新增)
+
+- [ ] **消息格式兼容**: 消息队列格式与 RN 完全一致 `[moduleIds, methodIds, params, callbackIds]`
+- [ ] **模块接口兼容**: DeviceInfo 模块的接口与 react-native-device-info 保持一致
+- [ ] **JavaScript 接口兼容**: 能够运行标准的 RN Bridge 调用代码
+- [ ] **事件系统兼容**: 事件的注册、监听、分发行为与 RN 一致
+- [ ] **回调机制兼容**: 成功/失败回调的处理方式与 RN 保持一致
+- [ ] **异常处理兼容**: JavaScript 异常处理机制与 RN 保持一致
+
 ### 功能验收
 
 - [ ] JavaScript 可以成功调用所有 DeviceInfo 模块方法
 - [ ] 所有方法都能返回正确的数据格式
-- [ ] 电池状态变化事件可以正确推送到 JavaScript
+- [ ] 设备信息变化事件可以正确推送到 JavaScript
 - [ ] 错误情况得到正确处理和提示
 
 ### 性能验收
@@ -345,37 +305,44 @@
   - 性能优化的思路和方法
   - 与官方实现的对比分析
 
-## ⏱️ 时间规划
+## ⏱️ 时间规划 (MVP 版本)
 
-| 任务 | 预估时间 | 调整后时间 | 依赖关系 |
-|------|---------|-----------|----------|
-| 任务1: JSCExecutor 集成 | 5-7 天 | **7-10 天** | 无 |
-| 任务2: MessageQueue 从零实现 | 3-4 天 | **4-6 天** | 依赖任务1 |
-| 任务3: Native 模块从零实现 | 4-5 天 | **5-7 天** | 依赖任务1 |
-| 任务4: 集成测试验证 | 2-3 天 | **3-4 天** | 依赖任务2,3 |
+| 任务 | 原计划 | MVP调整后 | 主要变化 | 依赖关系 |
+|------|---------|-----------|----------|----------|
+| 任务1: 从零构建 JSCExecutor | 7-10 天 | **3天** | 最小可行实现 + AI协助 | 无 |
+| 任务2: MessageQueue 最小实现 | 4-6 天 | **3天** | 简化架构，专注核心通信 | 依赖任务1 |
+| 任务3: 最小 Native 模块系统 | 5-7 天 | **3天** | 一个 DeviceInfo 示例模块 | 依赖任务1 |
+| 任务4: 基础集成测试 | 3-4 天 | **1天** | 基础功能验证即可 | 依赖任务2,3 |
 
-**原计划总计: 14-19 天**
-**调整后总计: 19-27 天**
+**MVP总计: 10天** (相比原计划的 19-27天，缩短 47-63%)
 
-### 📋 分阶段执行建议
+### 📋 MVP 执行建议
 
-**Phase 1A: 基础通信建立** (7-10天)
+**Week 1: 快速原型** (3-4天)
 
 - JSCExecutor 基础实现 (macOS环境)
 - 最简 MessageQueue 实现
-- Hello World 级别的 JS ↔ C++ 通信验证
+- 建立第一个 JS ↔ C++ 调用
 
-**Phase 1B: 核心功能完善** (6-8天)
+**Week 2: 核心功能** (4-5天)
 
-- MessageQueue 完整实现 (回调、错误处理)
-- DeviceInfo 模块实现 (macOS/iOS平台)
-- 基础集成测试
+- 完善 MessageQueue 通信机制
+- DeviceInfo 模块实现 (macOS平台)
+- Native 到 JS 事件推送
 
-**Phase 1C: 完善和优化** (6-9天)
+**Week 2: 验证测试** (1-2天)
 
-- 事件系统实现
-- 性能优化和错误处理完善
-- 完整功能测试和验证
+- 端到端集成测试
+- 基础性能验证
+- 文档和演示准备
+
+### 🎯 MVP 成功标准
+
+- [x] **核心通信**: JS 能调用 Native 方法并获得返回值
+- [x] **事件系统**: Native 能向 JS 发送事件
+- [x] **示例模块**: 至少一个完整的 DeviceInfo 模块
+- [x] **基础性能**: 调用延迟 < 10ms
+- [x] **稳定性**: 基础错误处理，无明显内存泄漏
 
 ## 🚀 下一步计划
 
