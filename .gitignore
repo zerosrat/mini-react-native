@@ -1,0 +1,59 @@
+# Build directories
+build/
+dist/
+out/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Compilation outputs
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# Platform specific
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Package managers
+node_modules/
+*.lock
+
+# Documentation build
+docs/_build/
+docs/html/
+docs/latex/
+
+# Test outputs
+test_results/
+coverage/
+
+# Local configuration
+.env
+.env.local
+config.local.*
+
+# Backup files
+*.bak
+*.backup
