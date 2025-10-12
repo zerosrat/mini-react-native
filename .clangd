@@ -1,0 +1,22 @@
+CompileFlags:
+  Add:
+    - -std=c++17
+    - -Wall
+    - -Wextra
+  CompilationDatabase: build
+
+Index:
+  Background: Build
+
+InlayHints:
+  Enabled: true
+  ParameterNames: true
+  DeducedTypes: true
+
+Hover:
+  ShowAKA: true
+
+Diagnostics:
+  ClangTidy:
+    Add: ["readability-*", "performance-*"]
+    Remove: ["readability-magic-numbers"]

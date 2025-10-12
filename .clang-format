@@ -1,0 +1,11 @@
+# clang-format configuration for Mini React Native
+# 使用 Google 风格，简洁紧凑的代码风格
+
+BasedOnStyle: Google
+
+# 调整预处理器缩进
+IndentPPDirectives: BeforeHash
+
+# 只做最小调整
+Language: Cpp
+Standard: c++17
