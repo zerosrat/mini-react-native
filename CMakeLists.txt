@@ -13,10 +13,10 @@ project(MiniReactNative)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 设置编译选项
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
+# 设置编译选项（由 CMAKE_BUILD_TYPE 变量决定）
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra") # Debug 和 Release 模式都会应用的编译标志
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0") # Debug 模式下特有的编译标志
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2") # Release 模式下特有的编译标志
 
 # 包含目录
 include_directories(src)
@@ -48,12 +48,14 @@ add_library(mini_react_native STATIC ${ALL_SOURCES})
 if(APPLE)
     # macOS/iOS 配置
 
-    # 链接 JavaScriptCore 框架
+    # 在 macOS 中查找 JavaScriptCore 框架
+    # 可能在这个路径：/System/Library/Frameworks/JavaScriptCore.framework
     find_library(JAVASCRIPTCORE_FRAMEWORK JavaScriptCore)
     if(NOT JAVASCRIPTCORE_FRAMEWORK)
         message(FATAL_ERROR "JavaScriptCore framework not found")
     endif()
 
+    # 链接 JavaScriptCore 框架
     target_link_libraries(mini_react_native ${JAVASCRIPTCORE_FRAMEWORK})
 
     # macOS 特定设置
@@ -84,10 +86,11 @@ endif()
 add_executable(mini_rn_test examples/test_basic.cpp)
 target_link_libraries(mini_rn_test mini_react_native)
 
-# 安装配置
+# 安装配置（make install 时才会执行）
+# 安装静态库到 /usr/local/lib 下
 install(TARGETS mini_react_native
         ARCHIVE DESTINATION lib)
-
+# 安装头文件到 /usr/local/include/mini_react_native 下
 install(DIRECTORY src/
         DESTINATION include/mini_react_native
         FILES_MATCHING PATTERN "*.h")
