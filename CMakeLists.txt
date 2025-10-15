@@ -86,6 +86,10 @@ endif()
 add_executable(mini_rn_test examples/test_basic.cpp)
 target_link_libraries(mini_rn_test mini_react_native)
 
+# MessageQueue 测试可执行文件
+add_executable(messagequeue_test examples/test_messagequeue.cpp)
+target_link_libraries(messagequeue_test mini_react_native)
+
 # 安装配置（make install 时才会执行）
 # 安装静态库到 /usr/local/lib 下
 install(TARGETS mini_react_native

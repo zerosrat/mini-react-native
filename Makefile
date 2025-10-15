@@ -37,9 +37,26 @@ build: configure
 # 执行顺序：configure → build → test
 .PHONY: test
 test: build
+	@echo "🧪 Running all tests..."
+	@echo "\n📝 Test 1: Basic functionality test"
+	@./$(BUILD_DIR)/mini_rn_test
+	@echo "\n📝 Test 2: MessageQueue validation test"
+	@./$(BUILD_DIR)/messagequeue_test
+	@echo "\n✅ All tests complete"
+
+# 运行基础测试
+.PHONY: test-basic
+test-basic: build
 	@echo "🧪 Running basic functionality test..."
 	@./$(BUILD_DIR)/mini_rn_test
-	@echo "✅ Test complete"
+	@echo "✅ Basic test complete"
+
+# 运行 MessageQueue 测试
+.PHONY: test-messagequeue
+test-messagequeue: build
+	@echo "🧪 Running MessageQueue validation test..."
+	@./$(BUILD_DIR)/messagequeue_test
+	@echo "✅ MessageQueue test complete"
 
 # 清理构建文件
 .PHONY: clean
@@ -105,20 +122,28 @@ dev:
 help:
 	@echo "Mini React Native - Available Commands:"
 	@echo ""
-	@echo "  make build          - 编译项目 (默认目标)"
-	@echo "  make test           - 运行测试程序"
-	@echo "  make clean          - 清理构建文件"
-	@echo "  make rebuild        - 完全重新构建"
-	@echo "  make configure      - 仅配置 CMake"
-	@echo "  make install-deps   - 安装开发依赖"
-	@echo "  make format         - 格式化代码"
-	@echo "  make info           - 显示构建信息"
-	@echo "  make dev            - 开发模式（自动重建）"
-	@echo "  make help           - 显示此帮助信息"
+	@echo "构建命令:"
+	@echo "  make build            - 编译项目 (默认目标)"
+	@echo "  make clean            - 清理构建文件"
+	@echo "  make rebuild          - 完全重新构建"
+	@echo "  make configure        - 仅配置 CMake"
+	@echo ""
+	@echo "测试命令:"
+	@echo "  make test             - 运行所有测试"
+	@echo "  make test-basic       - 仅运行基础功能测试"
+	@echo "  make test-messagequeue- 仅运行 MessageQueue 测试"
+	@echo ""
+	@echo "开发工具:"
+	@echo "  make install-deps     - 安装开发依赖"
+	@echo "  make format           - 格式化代码"
+	@echo "  make info             - 显示构建信息"
+	@echo "  make dev              - 开发模式（自动重建）"
+	@echo "  make help             - 显示此帮助信息"
 	@echo ""
 	@echo "环境变量:"
-	@echo "  CMAKE_BUILD_TYPE    - 构建类型 (Debug/Release, 默认: Debug)"
+	@echo "  CMAKE_BUILD_TYPE      - 构建类型 (Debug/Release, 默认: Debug)"
 	@echo ""
 	@echo "示例:"
 	@echo "  make CMAKE_BUILD_TYPE=Release build"
 	@echo "  make test"
+	@echo "  make test-messagequeue"
