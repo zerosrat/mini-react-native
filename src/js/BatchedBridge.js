@@ -15,13 +15,17 @@
 
 // 引入 MessageQueue（在实际环境中会通过模块加载）
 // 由于我们在 JavaScript 环境中运行，这里直接使用全局引用
-let MessageQueue;
+// 避免重新声明 MessageQueue 变量，直接使用已有的全局变量
+var MessageQueueClass;
 if (typeof require !== 'undefined') {
   // Node.js 环境
-  MessageQueue = require('./MessageQueue.js');
+  MessageQueueClass = require('./MessageQueue.js');
 } else if (typeof global !== 'undefined' && global.MessageQueue) {
   // 全局环境
-  MessageQueue = global.MessageQueue;
+  MessageQueueClass = global.MessageQueue;
+} else if (typeof MessageQueue !== 'undefined') {
+  // 当前作用域中已经存在 MessageQueue
+  MessageQueueClass = MessageQueue;
 } else {
   console.error('[BatchedBridge] MessageQueue not found');
 }
@@ -34,7 +38,7 @@ if (typeof require !== 'undefined') {
 class BatchedBridge {
   constructor() {
     // 创建核心消息队列实例
-    this._messageQueue = new MessageQueue();
+    this._messageQueue = new MessageQueueClass();
 
     // 模块注册表
     this._nativeModules = {};

@@ -55,7 +55,7 @@ test-basic: build
 .PHONY: test-messagequeue
 test-messagequeue: build
 	@echo "🧪 Running MessageQueue validation test..."
-	@./$(BUILD_DIR)/messagequeue_test
+	@./$(BUILD_DIR)/test_messagequeue
 	@echo "✅ MessageQueue test complete"
 
 # 清理构建文件

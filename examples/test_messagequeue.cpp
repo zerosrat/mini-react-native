@@ -32,6 +32,7 @@ int main() {
     std::string messageQueueJS = readFile("src/js/MessageQueue.js");
     if (!messageQueueJS.empty()) {
       executor.loadApplicationScript(messageQueueJS, "MessageQueue.js");
+      std::cout << "MessageQueue.js loaded successfully" << std::endl;
     }
 
     // 加载 BatchedBridge.js
@@ -39,11 +40,12 @@ int main() {
     std::string batchedBridgeJS = readFile("src/js/BatchedBridge.js");
     if (!batchedBridgeJS.empty()) {
       executor.loadApplicationScript(batchedBridgeJS, "BatchedBridge.js");
+      std::cout << "BatchedBridge.js loaded successfully" << std::endl;
     }
 
     // 运行测试
     std::cout << "Running MessageQueue tests..." << std::endl;
-    std::string testScript = readFile("examples/test_messagequeue.js");
+    std::string testScript = readFile("examples/scripts/test_messagequeue.js");
     if (!testScript.empty()) {
       executor.loadApplicationScript(testScript, "test_messagequeue.js");
     }
