@@ -19,7 +19,7 @@
    - 处理异步代码执行和调度
 
 3. **Bridge 函数注入** - 向 JavaScript 环境注入 Native 通信函数
-   - 注入关键的 Bridge 通信函数（如 `__nativeFlushQueuedReactWork`）
+   - 注入关键的 Bridge 通信函数（如 `nativeFlushQueueImmediate`）
    - 提供 JavaScript 调用 Native 的接口
    - 建立双向通信的桥梁
 

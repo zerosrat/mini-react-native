@@ -76,7 +76,7 @@
    - ✅ 替换模拟逻辑为真实 JavaScriptCore 调用
    - ✅ 实现 Native 函数注入到 JS 环境
    - ✅ 建立完整的数据类型转换机制
-   - ✅ 实现 `__nativeFlushQueuedReactWork` 等关键函数
+   - ✅ 实现 `nativeFlushQueueImmediate` 等关键函数
 
 2. **MessageQueue 机制完善**
    - 实现与 RN 一致的消息队列格式

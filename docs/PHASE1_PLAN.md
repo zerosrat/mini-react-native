@@ -75,7 +75,7 @@
 #### 子任务 1.4: RN 标准 Native 函数注入 (0.5天)
 
 - [x] **RN Bridge 关键函数注入**
-  - 实现 `__nativeFlushQueuedReactWork(moduleIds, methodIds, params, callbacks)`
+  - 实现 `nativeFlushQueueImmediate(moduleIds, methodIds, params, callbacks)`
   - 实现 `__nativeCallSyncHook(moduleId, methodId, args)`
   - 实现 `__nativeLoggingHook(level, message)`
   - 确保函数签名与 RN 完全一致
@@ -118,7 +118,7 @@
 #### 子任务 2.2: RN 标准 Bridge 集成 (1天)
 
 - [ ] **RN Bridge 函数完整实现**
-  - 完整实现 `__nativeFlushQueuedReactWork(moduleIds, methodIds, params, callbacks)`
+  - 完整实现 `nativeFlushQueueImmediate(moduleIds, methodIds, params, callbacks)`
   - 消息格式处理与 RN 完全一致
   - 支持 RN 标准的批量调用机制
 

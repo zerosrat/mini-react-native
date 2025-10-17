@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+
 #include "bridge/JSCExecutor.h"
 
 using namespace mini_rn::bridge;
@@ -15,22 +16,23 @@ using namespace mini_rn::bridge;
  */
 
 void testJSCExecutor() {
-    std::cout << "\n=== Mini React Native - JSCExecutor Basic Test ===" << std::endl;
+  std::cout << "\n=== Mini React Native - JSCExecutor Basic Test ==="
+            << std::endl;
 
-    try {
-        // 创建 JSCExecutor 实例
-        std::cout << "\n1. Creating JSCExecutor..." << std::endl;
-        JSCExecutor executor;
+  try {
+    // 创建 JSCExecutor 实例
+    std::cout << "\n1. Creating JSCExecutor..." << std::endl;
+    JSCExecutor executor;
 
-        // 设置异常处理器
-        executor.setJSExceptionHandler([](const std::string& error) {
-            std::cout << "[Exception Handler] " << error << std::endl;
-        });
+    // 设置异常处理器
+    executor.setJSExceptionHandler([](const std::string& error) {
+      std::cout << "[Exception Handler] " << error << std::endl;
+    });
 
-        // 测试基本的 JavaScript 执行
-        std::cout << "\n2. Testing basic JavaScript execution..." << std::endl;
+    // 测试基本的 JavaScript 执行
+    std::cout << "\n2. Testing basic JavaScript execution..." << std::endl;
 
-        std::string testScript = R"(
+    std::string testScript = R"(
             console.log("Hello from JavaScript!");
             console.log("Testing global object:", typeof global);
             console.log("Development mode:", __DEV__);
@@ -46,12 +48,12 @@ void testJSCExecutor() {
             console.log("Object name:", testObject.name);
         )";
 
-        executor.loadApplicationScript(testScript, "test_basic.js");
+    executor.loadApplicationScript(testScript, "test_basic.js");
 
-        // 测试 Bridge 函数调用
-        std::cout << "\n3. Testing Bridge function calls..." << std::endl;
+    // 测试 Bridge 函数调用
+    std::cout << "\n3. Testing Bridge function calls..." << std::endl;
 
-        std::string bridgeTestScript = R"(
+    std::string bridgeTestScript = R"(
             console.log("Testing Bridge functions...");
 
             // 测试日志函数
@@ -61,18 +63,18 @@ void testJSCExecutor() {
             }
 
             // 测试消息队列函数 (目前只是打印)
-            if (typeof __nativeFlushQueuedReactWork === 'function') {
-                console.log("Calling __nativeFlushQueuedReactWork...");
-                __nativeFlushQueuedReactWork([1], [0], [["test"]], [42]);
+            if (typeof nativeFlushQueueImmediate === 'function') {
+                console.log("Calling nativeFlushQueueImmediate...");
+                nativeFlushQueueImmediate([1], [0], [["test"]], [42]);
             }
         )";
 
-        executor.loadApplicationScript(bridgeTestScript, "bridge_test.js");
+    executor.loadApplicationScript(bridgeTestScript, "bridge_test.js");
 
-        // 测试错误处理
-        std::cout << "\n4. Testing error handling..." << std::endl;
+    // 测试错误处理
+    std::cout << "\n4. Testing error handling..." << std::endl;
 
-        std::string errorTestScript = R"(
+    std::string errorTestScript = R"(
             console.log("Testing error handling...");
             try {
                 // 故意制造一个错误
@@ -82,22 +84,23 @@ void testJSCExecutor() {
             }
         )";
 
-        executor.loadApplicationScript(errorTestScript, "error_test.js");
+    executor.loadApplicationScript(errorTestScript, "error_test.js");
 
-        std::cout << "\n5. JSCExecutor test completed successfully!" << std::endl;
+    std::cout << "\n5. JSCExecutor test completed successfully!" << std::endl;
 
-    } catch (const std::exception& e) {
-        std::cout << "\nTest failed with exception: " << e.what() << std::endl;
-    }
+  } catch (const std::exception& e) {
+    std::cout << "\nTest failed with exception: " << e.what() << std::endl;
+  }
 
-    std::cout << "\n===========================================" << std::endl;
+  std::cout << "\n===========================================" << std::endl;
 }
 
 int main() {
-    std::cout << "Mini React Native - Basic Functionality Test" << std::endl;
-    std::cout << "This test verifies the core JSCExecutor implementation" << std::endl;
+  std::cout << "Mini React Native - Basic Functionality Test" << std::endl;
+  std::cout << "This test verifies the core JSCExecutor implementation"
+            << std::endl;
 
-    testJSCExecutor();
+  testJSCExecutor();
 
-    return 0;
+  return 0;
 }

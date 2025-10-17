@@ -167,7 +167,7 @@ class MessageQueue {
 
   /**
    * 刷新消息队列到 Native
-   * 调用 Native 端的 __nativeFlushQueuedReactWork 函数
+   * 调用 Native 端的 nativeFlushQueueImmediate 函数
    *
    * @private
    */
@@ -176,7 +176,7 @@ class MessageQueue {
       return; // 队列为空，无需刷新
     }
 
-    if (typeof __nativeFlushQueuedReactWork === 'function') {
+    if (typeof nativeFlushQueueImmediate === 'function') {
       // 获取当前队列
       const queue = this.flushedQueue();
 
@@ -190,14 +190,14 @@ class MessageQueue {
       }
 
       // 调用 Native 函数，传递标准的 RN 消息格式
-      __nativeFlushQueuedReactWork(
+      nativeFlushQueueImmediate(
         queue[0], // moduleIds
         queue[1], // methodIds
         queue[2], // params
         queue[3]  // callbackIds
       );
     } else {
-      console.error('[MessageQueue] __nativeFlushQueuedReactWork not available');
+      console.error('[MessageQueue] nativeFlushQueueImmediate not available');
     }
   }
 

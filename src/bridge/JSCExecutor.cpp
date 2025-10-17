@@ -113,7 +113,7 @@ void JSCExecutor::installBridgeFunctions() {
   // 注入关键的 Bridge 通信函数
   // 这个函数是 React Native MessageQueue 调用 Native 的核心接口
   installGlobalFunction(
-      "__nativeFlushQueuedReactWork",
+      "nativeFlushQueueImmediate",
       [](JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject,
          size_t argumentCount, const JSValueRef arguments[],
          JSValueRef *exception) -> JSValueRef {
@@ -123,7 +123,7 @@ void JSCExecutor::installBridgeFunctions() {
         (void)arguments;
         (void)exception;
 
-        std::cout << "[Bridge] __nativeFlushQueuedReactWork called with "
+        std::cout << "[Bridge] nativeFlushQueueImmediate called with "
                   << argumentCount << " arguments" << std::endl;
 
         // TODO: 在下一步实现完整的消息队列处理
