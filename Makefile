@@ -41,7 +41,7 @@ test: build
 	@echo "\n📝 Test 1: Basic functionality test"
 	@./$(BUILD_DIR)/mini_rn_test
 	@echo "\n📝 Test 2: MessageQueue validation test"
-	@./$(BUILD_DIR)/messagequeue_test
+	@./$(BUILD_DIR)/test_messagequeue
 	@echo "\n✅ All tests complete"
 
 # 运行基础测试
