@@ -65,7 +65,7 @@ void testJSCExecutor() {
             // 测试消息队列函数 (目前只是打印)
             if (typeof nativeFlushQueueImmediate === 'function') {
                 console.log("Calling nativeFlushQueueImmediate...");
-                nativeFlushQueueImmediate([1], [0], [["test"]], [42]);
+                nativeFlushQueueImmediate([[1], [0], [["test"]], [42]]);
             }
         )";
 

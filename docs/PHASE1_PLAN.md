@@ -96,33 +96,34 @@
 
 #### 子任务 2.1: RN 标准 MessageQueue 实现 (1.5天)
 
-- [ ] **MessageQueue 类 (严格按照 RN 设计)**
+- [x] **MessageQueue 类 (严格按照 RN 设计)**
 
   ```javascript
   // 完全参照 React Native MessageQueue.js
   class MessageQueue {
     constructor()                    // 初始化队列和回调表
     registerLazyCallableModule(name, factory) // 注册延迟加载模块
-    enqueueNativeCall(moduleID, methodID, params, onFail, onSucc) // 调用 Native 方法
+    enqueueNativeCall(moduleID, methodID, params, onFail, onSucc) // JavaScript → Native 调用
+    callFunctionReturnFlushedQueue(module, method, args)       // Native → JavaScript 调用: 执行 JS 模块中的方法
+    invokeCallbackAndReturnFlushedQueue(cbID, args) // Native → JavaScript 调用: 执行回调并返回队列
     flushedQueue()                  // 获取并清空待处理队列
-    invokeCallbackAndReturnFlushedQueue(cbID, args) // 执行回调并返回队列
     getEventLoopRunningTime()       // 获取事件循环运行时间
   }
   ```
 
-- [ ] **RN 标准消息队列格式**
+- [x] **RN 标准消息队列格式**
   - 严格实现 `[moduleIds, methodIds, params, callbackIds]` 格式
   - 回调ID生成和管理与 RN 完全一致
   - 模块注册表结构与 RN 保持一致
 
 #### 子任务 2.2: RN 标准 Bridge 集成 (1天)
 
-- [ ] **RN Bridge 函数完整实现**
+- [x] **RN Bridge 函数完整实现**
   - 完整实现 `nativeFlushQueueImmediate(moduleIds, methodIds, params, callbacks)`
   - 消息格式处理与 RN 完全一致
   - 支持 RN 标准的批量调用机制
 
-- [ ] **RN 兼容回调机制**
+- [x] **RN 兼容回调机制**
   - 实现与 RN 一致的回调ID管理
   - 支持成功/失败双回调模式
   - 回调执行时机与 RN 保持一致

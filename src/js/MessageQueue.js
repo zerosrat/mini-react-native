@@ -264,12 +264,8 @@ class MessageQueue {
       }
 
       // 调用 Native 函数，传递标准的 RN 消息格式
-      nativeFlushQueueImmediate(
-        queue[0], // moduleIds
-        queue[1], // methodIds
-        queue[2], // params
-        queue[3]  // callbackIds
-      );
+      // 对齐 React Native 真实实现：传递整个 queue 数组而不是分离的4个参数
+      nativeFlushQueueImmediate(queue);
     } else {
       console.error('[MessageQueue] nativeFlushQueueImmediate not available');
     }

@@ -4,6 +4,8 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <vector>
+#include <unordered_map>
 
 // 跨平台 JavaScript 引擎支持
 #ifdef __APPLE__
@@ -18,6 +20,48 @@
 
 namespace mini_rn {
 namespace bridge {
+
+/**
+ * Bridge 消息队列数据结构
+ * 严格遵循 React Native 的消息格式：[moduleIds, methodIds, params, callbackIds]
+ */
+struct BridgeMessage {
+  std::vector<int> moduleIds;      // 模块ID数组
+  std::vector<int> methodIds;      // 方法ID数组
+  std::vector<std::string> params; // 参数数组（JSON字符串格式）
+  std::vector<int> callbackIds;    // 回调ID数组
+
+  // 获取调用数量
+  size_t getCallCount() const {
+    return moduleIds.size();
+  }
+
+  // 验证消息格式是否正确
+  bool isValid() const {
+    return moduleIds.size() == methodIds.size() &&
+           methodIds.size() == params.size() &&
+           params.size() == callbackIds.size();
+  }
+};
+
+/**
+ * 回调信息结构
+ */
+struct CallbackInfo {
+  int callbackId;
+  // 为后续扩展预留字段
+  // std::function<void(const std::string&)> callback;
+};
+
+/**
+ * 模块调用信息结构
+ */
+struct ModuleCall {
+  int moduleId;
+  int methodId;
+  std::string params;  // JSON格式参数
+  int callbackId;
+};
 
 /**
  * JSCExecutor - JavaScript 执行器
@@ -130,6 +174,51 @@ class JSCExecutor {
    */
   std::string jsValueToString(JSValueRef value);
   JSValueRef stringToJSValue(const std::string &str);
+
+  /**
+   * JSValue 到 JSON 字符串转换（对齐 React Native 实现）
+   * 这个方法模拟 RN 中的 JSValueToJSONString 功能
+   * @param value JavaScript 值（通常是数组或对象）
+   * @return JSON 格式的字符串表示
+   */
+  std::string jsValueToJSONString(JSValueRef value);
+
+  /**
+   * Native Bridge 函数实现（对齐RN架构）
+   * 这些方法对应RN中JSCExecutor的Bridge函数，从静态回调中调用
+   */
+
+  /**
+   * 处理来自JavaScript的队列刷新请求
+   * 对齐React Native实现：JSCExecutor::nativeFlushQueueImmediate
+   * @param queue JavaScript传递的队列数组 [moduleIds, methodIds, params, callbackIds]
+   */
+  void nativeFlushQueueImmediate(JSValueRef queue);
+
+  /**
+   * 处理来自JavaScript的日志请求
+   * 对齐React Native实现：JSCExecutor::nativeLoggingHook
+   * @param level 日志级别
+   * @param message 日志消息
+   */
+  void nativeLoggingHook(JSValueRef level, JSValueRef message);
+
+  /**
+   * 静态实例管理（用于静态回调访问实例方法）
+   */
+  static JSCExecutor* getCurrentInstance();
+
+private:
+  /**
+   * 静态实例指针（简化的实例管理）
+   */
+  static JSCExecutor* s_currentInstance;
+
+  /**
+   * 处理Bridge消息（从JSON解析后的消息）
+   * @param message 解析后的Bridge消息
+   */
+  void processBridgeMessage(const mini_rn::bridge::BridgeMessage& message);
 };
 
 }  // namespace bridge

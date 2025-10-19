@@ -31,6 +31,7 @@ set(MODULE_SOURCES
 )
 
 set(UTIL_SOURCES
+    src/utils/JSONParser.cpp     # JSON解析器实现
     # src/utils/Logger.cpp        # 下一步添加
 )
 
