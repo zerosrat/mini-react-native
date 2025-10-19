@@ -60,6 +60,21 @@ class MessageQueue {
   }
 
   /**
+   * 直接注册已实例化的模块（非延迟加载）
+   * 用于系统级或核心模块的直接注册
+   *
+   * @param {string} moduleName 模块名称
+   * @param {Object} module 模块实例
+   */
+  registerCallableModule(moduleName, module) {
+    this._modules[moduleName] = module;
+
+    if (this._debugEnabled) {
+      console.log(`[MessageQueue] Registered direct module: ${moduleName}`);
+    }
+  }
+
+  /**
    * 调用 Native 模块方法（核心方法）
    * 这是 JavaScript 调用 Native 的主要入口，严格遵循 RN 的调用约定
    *
@@ -69,7 +84,7 @@ class MessageQueue {
    * @param {function} onFail 失败回调函数
    * @param {function} onSucc 成功回调函数
    */
-  callNativeMethod(moduleID, methodID, params, onFail, onSucc) {
+  enqueueNativeCall(moduleID, methodID, params, onFail, onSucc) {
     if (this._debugEnabled) {
       console.log(`[MessageQueue] Calling native method - Module: ${moduleID}, Method: ${methodID}`);
     }
@@ -123,6 +138,65 @@ class MessageQueue {
 
     return queue;
   }
+
+  /**
+   * Native 调用 JavaScript 函数的标准接口
+   * Native 端通过此方法执行 JS 模块中的方法
+   *
+   * @param {string} module 模块名称
+   * @param {string} method 方法名称
+   * @param {Array} args 参数数组
+   * @returns {Array} 执行后的消息队列
+   */
+  callFunctionReturnFlushedQueue(module, method, args) {
+    if (this._debugEnabled) {
+      console.log(`[MessageQueue] Calling JS function - Module: ${module}, Method: ${method}`);
+    }
+
+    this._isInCallback = true;
+
+    try {
+      // 获取模块实例
+      const moduleInstance = this.getCallableModule(module);
+      if (!moduleInstance) {
+        console.error(`[MessageQueue] Module not found: ${module}`);
+        return this.flushedQueue();
+      }
+
+      // 检查方法是否存在
+      if (typeof moduleInstance[method] !== 'function') {
+        console.error(`[MessageQueue] Method not found: ${module}.${method}`);
+        return this.flushedQueue();
+      }
+
+      // 执行方法
+      moduleInstance[method].apply(moduleInstance, args || []);
+
+    } catch (error) {
+      console.error(`[MessageQueue] Error calling ${module}.${method}:`, error);
+    } finally {
+      this._isInCallback = false;
+    }
+
+    // 返回在函数执行过程中可能产生的新调用
+    return this.flushedQueue();
+  }
+
+  /**
+   * Native 调用 JavaScript 函数并返回结果和队列
+   * 用于需要同步返回值的场景
+   *
+   * @param {string} module 模块名称
+   * @param {string} method 方法名称
+   * @param {Array} args 参数数组
+   * @returns {Array} [result, flushedQueue] 结果和消息队列
+   *
+   * TODO: 低优先级功能，暂时不实现
+   * 当前架构主要基于异步通信，同步返回值不是核心需求
+   */
+  // callFunctionReturnResultAndFlushedQueue(module, method, args) {
+  //   // 实现将在后续版本中添加
+  // }
 
   /**
    * 执行回调并返回新的队列
@@ -239,14 +313,13 @@ class MessageQueue {
   }
 
   /**
-   * 获取或创建模块实例
-   * 支持延迟加载机制
+   * 获取已注册的模块实例
+   * 如果是延迟模块且未实例化，会触发实例化
    *
    * @param {string} moduleName 模块名称
    * @returns {Object} 模块实例
-   * @private
    */
-  _getModule(moduleName) {
+  getCallableModule(moduleName) {
     // 检查是否已实例化
     if (this._modules[moduleName]) {
       return this._modules[moduleName];

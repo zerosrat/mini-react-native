@@ -128,7 +128,7 @@ class BatchedBridge {
         console.log(`[BatchedBridge] Calling ${moduleName}.${methodName}`, params);
 
         // 通过 MessageQueue 发送调用
-        this._messageQueue.callNativeMethod(
+        this._messageQueue.enqueueNativeCall(
           moduleInfo.moduleID,
           methodID,
           params,

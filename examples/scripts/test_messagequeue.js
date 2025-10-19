@@ -15,7 +15,7 @@ console.log('Initial queue status:', JSON.stringify(status))
 
 // 验证基本方法存在
 console.log('Method availability:')
-console.log('- callNativeMethod:', typeof queue.callNativeMethod === 'function')
+console.log('- enqueueNativeCall:', typeof queue.enqueueNativeCall === 'function')
 console.log('- flushedQueue:', typeof queue.flushedQueue === 'function')
 console.log('- invokeCallbackAndReturnFlushedQueue:', typeof queue.invokeCallbackAndReturnFlushedQueue === 'function')
 
@@ -100,7 +100,7 @@ workflowQueue._flushQueue = function () {
 }
 
 // 现在进行实际的调用
-workflowQueue.callNativeMethod(
+workflowQueue.enqueueNativeCall(
   5,
   10,
   ['test', 'data'],
@@ -134,7 +134,7 @@ var callbackExecuted = false
 var callbackResult = null
 
 // 注册回调
-callbackQueue.callNativeMethod(
+callbackQueue.enqueueNativeCall(
   2,
   1,
   ['test_param'],

@@ -103,7 +103,7 @@
   class MessageQueue {
     constructor()                    // 初始化队列和回调表
     registerLazyCallableModule(name, factory) // 注册延迟加载模块
-    callNativeMethod(moduleID, methodID, params, onFail, onSucc) // 调用 Native 方法
+    enqueueNativeCall(moduleID, methodID, params, onFail, onSucc) // 调用 Native 方法
     flushedQueue()                  // 获取并清空待处理队列
     invokeCallbackAndReturnFlushedQueue(cbID, args) // 执行回调并返回队列
     getEventLoopRunningTime()       // 获取事件循环运行时间
