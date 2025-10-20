@@ -31,6 +31,17 @@ JSCExecutor *JSCExecutor::s_currentInstance = nullptr;
 JSCExecutor::JSCExecutor() : m_context(nullptr), m_globalObject(nullptr) {
   // 注册当前实例（简化的实例管理）
   s_currentInstance = this;
+
+  // 初始化模块注册器
+  m_moduleRegistry = std::make_unique<mini_rn::modules::ModuleRegistry>();
+
+  // 设置模块回调处理器
+  m_moduleRegistry->setCallbackHandler(
+    [this](int callId, const std::string& result, bool isError) {
+      this->handleModuleCallback(callId, result, isError);
+    }
+  );
+
   initializeJSContext();
 }
 
@@ -416,25 +427,57 @@ void JSCExecutor::processBridgeMessage(
   std::cout << "[JSCExecutor] Processing Bridge message with "
             << message.getCallCount() << " calls" << std::endl;
 
-  // 打印解析结果（调试用）
-  for (size_t i = 0; i < message.getCallCount() && i < 3; i++) {
-    std::cout << "[JSCExecutor] Call " << (i + 1)
-              << ": Module=" << message.moduleIds[i]
-              << ", Method=" << message.methodIds[i]
-              << ", Param=" << message.params[i]
-              << ", Callback=" << message.callbackIds[i] << std::endl;
-  }
-  if (message.getCallCount() > 3) {
-    std::cout << "[JSCExecutor] ... (showing first 3 of "
-              << message.getCallCount() << " calls)" << std::endl;
+  // 验证消息格式
+  if (!message.isValid()) {
+    std::cout << "[JSCExecutor] Error: Invalid bridge message format" << std::endl;
+    return;
   }
 
-  std::cout << "[JSCExecutor] RN-compatible Bridge message processing "
-               "completed successfully"
-            << std::endl;
-  std::cout << "[JSCExecutor] Note: Actual module invocation will be "
-               "implemented in Task 3"
-            << std::endl;
+  // 处理每个模块调用
+  for (size_t i = 0; i < message.getCallCount(); i++) {
+    unsigned int moduleId = static_cast<unsigned int>(message.moduleIds[i]);
+    unsigned int methodId = static_cast<unsigned int>(message.methodIds[i]);
+    const std::string& params = message.params[i];
+    int callId = message.callbackIds[i];
+
+    std::cout << "[JSCExecutor] Call " << (i + 1) << "/" << message.getCallCount()
+              << ": Module=" << moduleId
+              << ", Method=" << methodId
+              << ", Params=" << params
+              << ", CallId=" << callId << std::endl;
+
+    // 通过 ModuleRegistry 调用 Native 模块方法
+    if (m_moduleRegistry) {
+      m_moduleRegistry->callNativeMethod(moduleId, methodId, params, callId);
+    } else {
+      std::cout << "[JSCExecutor] Error: ModuleRegistry not initialized" << std::endl;
+    }
+  }
+
+  std::cout << "[JSCExecutor] Bridge message processing completed" << std::endl;
+}
+
+void JSCExecutor::handleModuleCallback(int callId, const std::string& result, bool isError) {
+  std::cout << "[JSCExecutor] Handling module callback - CallId: " << callId
+            << ", IsError: " << (isError ? "true" : "false")
+            << ", Result: " << result << std::endl;
+
+  try {
+    // TODO: 实现将结果返回给 JavaScript 的机制
+    // 这需要调用 JavaScript 的回调函数，类似于：
+    // - 如果是成功回调：callJSFunction("RCTDeviceEventEmitter", "emit", [callId, result])
+    // - 如果是错误回调：callJSFunction("RCTDeviceEventEmitter", "emit", [callId, null, error])
+
+    // 目前暂时只打印日志，在任务 3.2 实现具体模块时会完善这个机制
+    if (isError) {
+      std::cout << "[JSCExecutor] Module call failed: " << result << std::endl;
+    } else {
+      std::cout << "[JSCExecutor] Module call succeeded: " << result << std::endl;
+    }
+
+  } catch (const std::exception& e) {
+    std::cout << "[JSCExecutor] Error in handleModuleCallback: " << e.what() << std::endl;
+  }
 }
 
 }  // namespace bridge

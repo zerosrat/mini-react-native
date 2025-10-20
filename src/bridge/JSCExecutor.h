@@ -4,8 +4,10 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <vector>
 #include <unordered_map>
+#include <vector>
+
+#include "../modules/ModuleRegistry.h"
 
 // 跨平台 JavaScript 引擎支持
 #ifdef __APPLE__
@@ -26,15 +28,13 @@ namespace bridge {
  * 严格遵循 React Native 的消息格式：[moduleIds, methodIds, params, callbackIds]
  */
 struct BridgeMessage {
-  std::vector<int> moduleIds;      // 模块ID数组
-  std::vector<int> methodIds;      // 方法ID数组
-  std::vector<std::string> params; // 参数数组（JSON字符串格式）
-  std::vector<int> callbackIds;    // 回调ID数组
+  std::vector<int> moduleIds;       // 模块ID数组
+  std::vector<int> methodIds;       // 方法ID数组
+  std::vector<std::string> params;  // 参数数组（JSON字符串格式）
+  std::vector<int> callbackIds;     // 回调ID数组
 
   // 获取调用数量
-  size_t getCallCount() const {
-    return moduleIds.size();
-  }
+  size_t getCallCount() const { return moduleIds.size(); }
 
   // 验证消息格式是否正确
   bool isValid() const {
@@ -93,6 +93,8 @@ class JSCExecutor {
   JSObjectRef m_globalObject;
   // 异常处理回调函数
   std::function<void(const std::string &)> m_exceptionHandler;
+  // Native 模块注册器
+  std::unique_ptr<mini_rn::modules::ModuleRegistry> m_moduleRegistry;
 
  public:
   JSCExecutor();
@@ -143,6 +145,15 @@ class JSCExecutor {
    */
   JSGlobalContextRef getContext() const { return m_context; }
 
+  /**
+   * 获取模块注册器
+   * 用于注册 Native 模块和管理模块调用
+   * @return 模块注册器指针
+   */
+  mini_rn::modules::ModuleRegistry *getModuleRegistry() {
+    return m_moduleRegistry.get();
+  }
+
  private:
   /**
    * 初始化 JavaScript 执行环境
@@ -191,7 +202,8 @@ class JSCExecutor {
   /**
    * 处理来自JavaScript的队列刷新请求
    * 对齐React Native实现：JSCExecutor::nativeFlushQueueImmediate
-   * @param queue JavaScript传递的队列数组 [moduleIds, methodIds, params, callbackIds]
+   * @param queue JavaScript传递的队列数组 [moduleIds, methodIds, params,
+   * callbackIds]
    */
   void nativeFlushQueueImmediate(JSValueRef queue);
 
@@ -206,19 +218,29 @@ class JSCExecutor {
   /**
    * 静态实例管理（用于静态回调访问实例方法）
    */
-  static JSCExecutor* getCurrentInstance();
+  static JSCExecutor *getCurrentInstance();
 
-private:
+ private:
   /**
    * 静态实例指针（简化的实例管理）
    */
-  static JSCExecutor* s_currentInstance;
+  static JSCExecutor *s_currentInstance;
 
   /**
    * 处理Bridge消息（从JSON解析后的消息）
    * @param message 解析后的Bridge消息
    */
-  void processBridgeMessage(const mini_rn::bridge::BridgeMessage& message);
+  void processBridgeMessage(const mini_rn::bridge::BridgeMessage &message);
+
+  /**
+   * 处理模块调用回调
+   * 将 Native 模块的执行结果返回给 JavaScript
+   * @param callId 调用标识符
+   * @param result 执行结果（JSON格式）
+   * @param isError 是否为错误结果
+   */
+  void handleModuleCallback(int callId, const std::string &result,
+                            bool isError);
 };
 
 }  // namespace bridge

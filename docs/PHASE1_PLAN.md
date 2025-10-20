@@ -156,8 +156,7 @@
       virtual std::vector<std::string> getMethods() const = 0;
       virtual std::map<std::string, std::string> getConstants() const = 0;
       virtual void invoke(const std::string& methodName, const std::string& args,
-                         std::function<void(const std::string&)> callback) = 0;
-      virtual bool supportsWebWorkers() const { return false; }
+                         int callId) = 0;
       virtual ~NativeModule() = default;
   };
   ```

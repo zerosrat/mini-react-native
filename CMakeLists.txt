@@ -27,7 +27,8 @@ set(BRIDGE_SOURCES
 )
 
 set(MODULE_SOURCES
-    # src/modules/DeviceInfo.cpp  # 下一步添加
+    src/modules/ModuleRegistry.cpp
+    # src/modules/DeviceInfo.cpp  # 任务3.2中添加
 )
 
 set(UTIL_SOURCES
@@ -92,6 +93,11 @@ target_link_libraries(mini_rn_test mini_react_native)
 add_executable(test_messagequeue examples/test_messagequeue.cpp)
 target_include_directories(test_messagequeue PRIVATE src)
 target_link_libraries(test_messagequeue mini_react_native)
+
+# 模块框架测试可执行文件
+add_executable(test_module_framework examples/test_module_framework.cpp)
+target_include_directories(test_module_framework PRIVATE src)
+target_link_libraries(test_module_framework mini_react_native)
 
 # 安装配置（make install 时才会执行）
 # 安装静态库到 /usr/local/lib 下

@@ -42,6 +42,8 @@ test: build
 	@./$(BUILD_DIR)/mini_rn_test
 	@echo "\n📝 Test 2: MessageQueue validation test"
 	@./$(BUILD_DIR)/test_messagequeue
+		@echo "\n📝 Test 2: NativeModule validation test"
+	@./$(BUILD_DIR)/test_module_framework
 	@echo "\n✅ All tests complete"
 
 # 运行基础测试
@@ -57,6 +59,13 @@ test-messagequeue: build
 	@echo "🧪 Running MessageQueue validation test..."
 	@./$(BUILD_DIR)/test_messagequeue
 	@echo "✅ MessageQueue test complete"
+
+# 运行 NativeModule 测试
+.PHONY: test-module
+test-messagequeue: build
+	@echo "🧪 Running NativeModule validation test..."
+	@./$(BUILD_DIR)/test_module_framework
+	@echo "✅ NativeModule test complete"
 
 # 清理构建文件
 .PHONY: clean
