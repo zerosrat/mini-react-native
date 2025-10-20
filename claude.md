@@ -55,7 +55,7 @@
 
 本项目严格基于 **React Native 传统 Bridge 架构**（RN 0.60 之前的经典架构），不是新的 JSI/TurboModules 架构。
 
-具体的，桥架构版本参考 RN v0.57.8，这个版本只包含 Bridge 代码不包含 JSI 代码，便于学习和参考。
+具体的，桥架构版本参考 RN [v0.57.8](https://github.com/facebook/react-native/blob/0.57-stable/Libraries/BatchedBridge/MessageQueue.js)，这个版本只包含 Bridge 代码不包含 JSI 代码，便于学习和参考。
 
 **核心约束：**
 

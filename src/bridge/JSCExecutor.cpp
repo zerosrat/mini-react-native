@@ -1,8 +1,9 @@
 #include "JSCExecutor.h"
-#include "../utils/JSONParser.h"
 
 #include <iostream>
 #include <sstream>
+
+#include "../utils/JSONParser.h"
 
 // 统一的 JSValue 转换工具函数
 // 这个函数被静态回调函数和成员函数共同使用，避免代码重复
@@ -21,12 +22,11 @@ static std::string convertJSValueToString(JSContextRef ctx, JSValueRef value) {
   return result;
 }
 
-
 namespace mini_rn {
 namespace bridge {
 
 // 静态实例指针定义
-JSCExecutor* JSCExecutor::s_currentInstance = nullptr;
+JSCExecutor *JSCExecutor::s_currentInstance = nullptr;
 
 JSCExecutor::JSCExecutor() : m_context(nullptr), m_globalObject(nullptr) {
   // 注册当前实例（简化的实例管理）
@@ -124,7 +124,8 @@ void JSCExecutor::setupConsole() {
 void JSCExecutor::installBridgeFunctions() {
   // 注入关键的 Bridge 通信函数
   // 这个函数是 React Native MessageQueue 调用 Native 的核心接口
-  // 完全对齐 RN 实现：nativeFlushQueueImmediate(queue)，其中 queue = [moduleIds, methodIds, params, callbackIds]
+  // 完全对齐 RN 实现：nativeFlushQueueImmediate(queue)，其中 queue =
+  // [moduleIds, methodIds, params, callbackIds]
   installGlobalFunction(
       "nativeFlushQueueImmediate",
       [](JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject,
@@ -137,30 +138,35 @@ void JSCExecutor::installBridgeFunctions() {
         (void)ctx;
 
         std::cout << "[Bridge] nativeFlushQueueImmediate called with "
-                  << argumentCount << " arguments (RN-compatible single parameter)" << std::endl;
+                  << argumentCount
+                  << " arguments (RN-compatible single parameter)" << std::endl;
 
         try {
           // 获取JSCExecutor实例（对齐RN架构）
-          auto* executor = JSCExecutor::getCurrentInstance();
+          auto *executor = JSCExecutor::getCurrentInstance();
           if (!executor) {
-            std::cout << "[Bridge] Error: No JSCExecutor instance available" << std::endl;
+            std::cout << "[Bridge] Error: No JSCExecutor instance available"
+                      << std::endl;
             return JSValueMakeUndefined(ctx);
           }
 
           // 验证参数数量（对齐RN：单个queue参数）
           if (argumentCount != 1) {
-            std::cout << "[Bridge] Error: Expected 1 argument (queue array), got "
-                      << argumentCount << std::endl;
+            std::cout
+                << "[Bridge] Error: Expected 1 argument (queue array), got "
+                << argumentCount << std::endl;
             return JSValueMakeUndefined(ctx);
           }
 
           // 调用实例方法（对齐RN架构）
           executor->nativeFlushQueueImmediate(arguments[0]);
 
-        } catch (const std::exception& e) {
-          std::cout << "[Bridge] Exception in static callback: " << e.what() << std::endl;
+        } catch (const std::exception &e) {
+          std::cout << "[Bridge] Exception in static callback: " << e.what()
+                    << std::endl;
         } catch (...) {
-          std::cout << "[Bridge] Unknown exception in static callback" << std::endl;
+          std::cout << "[Bridge] Unknown exception in static callback"
+                    << std::endl;
         }
 
         return JSValueMakeUndefined(ctx);
@@ -180,9 +186,11 @@ void JSCExecutor::installBridgeFunctions() {
 
         try {
           // 获取JSCExecutor实例（对齐RN架构）
-          auto* executor = JSCExecutor::getCurrentInstance();
+          auto *executor = JSCExecutor::getCurrentInstance();
           if (!executor) {
-            std::cout << "[Bridge] Error: No JSCExecutor instance available for logging" << std::endl;
+            std::cout << "[Bridge] Error: No JSCExecutor instance available "
+                         "for logging"
+                      << std::endl;
             return JSValueMakeUndefined(ctx);
           }
 
@@ -190,11 +198,14 @@ void JSCExecutor::installBridgeFunctions() {
             // 调用实例方法（对齐RN架构）
             executor->nativeLoggingHook(arguments[0], arguments[1]);
           } else {
-            std::cout << "[Bridge] Warning: nativeLoggingHook called with insufficient arguments" << std::endl;
+            std::cout << "[Bridge] Warning: nativeLoggingHook called with "
+                         "insufficient arguments"
+                      << std::endl;
           }
 
-        } catch (const std::exception& e) {
-          std::cout << "[Bridge] Exception in logging callback: " << e.what() << std::endl;
+        } catch (const std::exception &e) {
+          std::cout << "[Bridge] Exception in logging callback: " << e.what()
+                    << std::endl;
         }
 
         return JSValueMakeUndefined(ctx);
@@ -297,17 +308,20 @@ std::string JSCExecutor::jsValueToJSONString(JSValueRef value) {
   try {
     // 获取全局 JSON 对象
     JSStringRef jsonName = JSStringCreateWithUTF8CString("JSON");
-    JSValueRef jsonObject = JSObjectGetProperty(m_context, m_globalObject, jsonName, nullptr);
+    JSValueRef jsonObject =
+        JSObjectGetProperty(m_context, m_globalObject, jsonName, nullptr);
     JSStringRelease(jsonName);
 
     if (!JSValueIsObject(m_context, jsonObject)) {
-      throw std::runtime_error("JSON object not available in JavaScript context");
+      throw std::runtime_error(
+          "JSON object not available in JavaScript context");
     }
 
     // 获取 JSON.stringify 方法
     JSObjectRef jsonObj = JSValueToObject(m_context, jsonObject, nullptr);
     JSStringRef stringifyName = JSStringCreateWithUTF8CString("stringify");
-    JSValueRef stringifyMethod = JSObjectGetProperty(m_context, jsonObj, stringifyName, nullptr);
+    JSValueRef stringifyMethod =
+        JSObjectGetProperty(m_context, jsonObj, stringifyName, nullptr);
     JSStringRelease(stringifyName);
 
     if (!JSValueIsObject(m_context, stringifyMethod)) {
@@ -315,23 +329,21 @@ std::string JSCExecutor::jsValueToJSONString(JSValueRef value) {
     }
 
     // 调用 JSON.stringify(value)
-    JSValueRef arguments[] = { value };
+    JSValueRef arguments[] = {value};
     JSValueRef exception = nullptr;
-    JSValueRef result = JSObjectCallAsFunction(
-        m_context,
-        (JSObjectRef)stringifyMethod,
-        nullptr,  // thisObject
-        1,        // argumentCount
-        arguments,
-        &exception
-    );
+    JSValueRef result =
+        JSObjectCallAsFunction(m_context, (JSObjectRef)stringifyMethod,
+                               nullptr,  // thisObject
+                               1,        // argumentCount
+                               arguments, &exception);
 
     if (exception) {
       handleJSException(exception);
       throw std::runtime_error("JSON.stringify failed with exception");
     }
 
-    if (JSValueIsNull(m_context, result) || JSValueIsUndefined(m_context, result)) {
+    if (JSValueIsNull(m_context, result) ||
+        JSValueIsUndefined(m_context, result)) {
       throw std::runtime_error("JSON.stringify returned null or undefined");
     }
 
@@ -343,69 +355,86 @@ std::string JSCExecutor::jsValueToJSONString(JSValueRef value) {
 
     return jsonString;
 
-  } catch (const std::exception& e) {
-    std::cout << "[JSCExecutor] Error in jsValueToJSONString: " << e.what() << std::endl;
+  } catch (const std::exception &e) {
+    std::cout << "[JSCExecutor] Error in jsValueToJSONString: " << e.what()
+              << std::endl;
 
     // 降级处理：如果 JSON.stringify 失败，尝试简单的字符串转换
-    std::cout << "[JSCExecutor] Falling back to simple string conversion" << std::endl;
+    std::cout << "[JSCExecutor] Falling back to simple string conversion"
+              << std::endl;
     return jsValueToString(value);
   }
 }
 
 // === Bridge 成员方法实现（对齐RN架构）===
 
-JSCExecutor* JSCExecutor::getCurrentInstance() {
-  return s_currentInstance;
-}
+JSCExecutor *JSCExecutor::getCurrentInstance() { return s_currentInstance; }
 
 void JSCExecutor::nativeFlushQueueImmediate(JSValueRef queue) {
-  std::cout << "[JSCExecutor] nativeFlushQueueImmediate called (instance method)" << std::endl;
+  std::cout
+      << "[JSCExecutor] nativeFlushQueueImmediate called (instance method)"
+      << std::endl;
 
   try {
     // Step 1: JSValue -> JSON字符串 (对齐RN: queue.toJSONString())
     std::string queueStr = jsValueToJSONString(queue);
-    std::cout << "[JSCExecutor] JSON serialization successful, length: " << queueStr.length() << std::endl;
+    std::cout << "[JSCExecutor] JSON serialization successful, length: "
+              << queueStr.length() << std::endl;
 
     // Step 2: JSON字符串 -> BridgeMessage (替代 folly::parseJson)
-    std::cout << "[JSCExecutor] Parsing JSON with SimpleBridgeJSONParser..." << std::endl;
-    mini_rn::bridge::BridgeMessage message = mini_rn::utils::SimpleBridgeJSONParser::parseBridgeQueue(queueStr);
+    std::cout << "[JSCExecutor] Parsing JSON with SimpleBridgeJSONParser..."
+              << std::endl;
+    mini_rn::bridge::BridgeMessage message =
+        mini_rn::utils::SimpleBridgeJSONParser::parseBridgeQueue(queueStr);
 
     // Step 3: 处理消息 (替代 m_delegate->callNativeModules)
     std::cout << "[JSCExecutor] Processing parsed message..." << std::endl;
     processBridgeMessage(message);
 
-  } catch (const std::exception& e) {
-    std::cout << "[JSCExecutor] Error in nativeFlushQueueImmediate: " << e.what() << std::endl;
+  } catch (const std::exception &e) {
+    std::cout << "[JSCExecutor] Error in nativeFlushQueueImmediate: "
+              << e.what() << std::endl;
   }
 }
 
 void JSCExecutor::nativeLoggingHook(JSValueRef level, JSValueRef message) {
-  std::cout << "[JSCExecutor] nativeLoggingHook called (instance method)" << std::endl;
+  std::cout << "[JSCExecutor] nativeLoggingHook called (instance method)"
+            << std::endl;
 
   try {
     std::string levelStr = jsValueToString(level);
     std::string messageStr = jsValueToString(message);
     std::cout << "[" << levelStr << "] " << messageStr << std::endl;
-  } catch (const std::exception& e) {
-    std::cout << "[JSCExecutor] Error in nativeLoggingHook: " << e.what() << std::endl;
+  } catch (const std::exception &e) {
+    std::cout << "[JSCExecutor] Error in nativeLoggingHook: " << e.what()
+              << std::endl;
   }
 }
 
-void JSCExecutor::processBridgeMessage(const mini_rn::bridge::BridgeMessage& message) {
-  std::cout << "[JSCExecutor] Processing Bridge message with " << message.getCallCount() << " calls" << std::endl;
+void JSCExecutor::processBridgeMessage(
+    const mini_rn::bridge::BridgeMessage &message) {
+  std::cout << "[JSCExecutor] Processing Bridge message with "
+            << message.getCallCount() << " calls" << std::endl;
 
   // 打印解析结果（调试用）
   for (size_t i = 0; i < message.getCallCount() && i < 3; i++) {
-    std::cout << "[JSCExecutor] Call " << (i + 1) << ": Module=" << message.moduleIds[i]
+    std::cout << "[JSCExecutor] Call " << (i + 1)
+              << ": Module=" << message.moduleIds[i]
               << ", Method=" << message.methodIds[i]
+              << ", Param=" << message.params[i]
               << ", Callback=" << message.callbackIds[i] << std::endl;
   }
   if (message.getCallCount() > 3) {
-    std::cout << "[JSCExecutor] ... (showing first 3 of " << message.getCallCount() << " calls)" << std::endl;
+    std::cout << "[JSCExecutor] ... (showing first 3 of "
+              << message.getCallCount() << " calls)" << std::endl;
   }
 
-  std::cout << "[JSCExecutor] RN-compatible Bridge message processing completed successfully" << std::endl;
-  std::cout << "[JSCExecutor] Note: Actual module invocation will be implemented in Task 3" << std::endl;
+  std::cout << "[JSCExecutor] RN-compatible Bridge message processing "
+               "completed successfully"
+            << std::endl;
+  std::cout << "[JSCExecutor] Note: Actual module invocation will be "
+               "implemented in Task 3"
+            << std::endl;
 }
 
 }  // namespace bridge
