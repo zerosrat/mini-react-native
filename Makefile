@@ -62,7 +62,7 @@ test-messagequeue: build
 
 # 运行 NativeModule 测试
 .PHONY: test-module
-test-messagequeue: build
+test-module: build
 	@echo "🧪 Running NativeModule validation test..."
 	@./$(BUILD_DIR)/test_module_framework
 	@echo "✅ NativeModule test complete"
