@@ -2,8 +2,8 @@
 #include <memory>
 #include <vector>
 
-#include "../src/bridge/JSCExecutor.h"
-#include "../src/modules/ModuleRegistry.h"
+#include "common/bridge/JSCExecutor.h"
+#include "common/modules/ModuleRegistry.h"
 #include "MockModule.h"
 
 /**

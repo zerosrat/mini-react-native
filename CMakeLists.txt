@@ -21,26 +21,31 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2") # Release 模式�
 # 包含目录
 include_directories(src)
 
-# 源文件
-set(BRIDGE_SOURCES
-    src/bridge/JSCExecutor.cpp
+# 通用源文件 (跨平台)
+set(COMMON_SOURCES
+    src/common/bridge/JSCExecutor.cpp
+    src/common/modules/ModuleRegistry.cpp
+    src/common/utils/JSONParser.cpp
 )
 
-set(MODULE_SOURCES
-    src/modules/ModuleRegistry.cpp
-    # src/modules/DeviceInfo.cpp  # 任务3.2中添加
-)
-
-set(UTIL_SOURCES
-    src/utils/JSONParser.cpp     # JSON解析器实现
-    # src/utils/Logger.cpp        # 下一步添加
-)
+# 平台特定源文件
+if(APPLE)
+    set(PLATFORM_SOURCES
+        src/macos/modules/deviceinfo/DeviceInfoModule.mm
+    )
+    # 设置 Objective-C++ 编译标志
+    set_source_files_properties(${PLATFORM_SOURCES}
+        PROPERTIES COMPILE_FLAGS "-fobjc-arc")
+elseif(ANDROID)
+    set(PLATFORM_SOURCES
+        # src/android/modules/deviceinfo/DeviceInfoModule.cpp  # 未来添加
+    )
+endif()
 
 # 所有源文件
 set(ALL_SOURCES
-    ${BRIDGE_SOURCES}
-    ${MODULE_SOURCES}
-    ${UTIL_SOURCES}
+    ${COMMON_SOURCES}
+    ${PLATFORM_SOURCES}
 )
 
 # 创建静态库
@@ -57,8 +62,24 @@ if(APPLE)
         message(FATAL_ERROR "JavaScriptCore framework not found")
     endif()
 
-    # 链接 JavaScriptCore 框架
-    target_link_libraries(mini_react_native ${JAVASCRIPTCORE_FRAMEWORK})
+    # 查找并链接 IOKit 框架 (DeviceInfo 模块需要)
+    find_library(IOKIT_FRAMEWORK IOKit)
+    if(NOT IOKIT_FRAMEWORK)
+        message(FATAL_ERROR "IOKit framework not found")
+    endif()
+
+    # 查找并链接 Foundation 框架
+    find_library(FOUNDATION_FRAMEWORK Foundation)
+    if(NOT FOUNDATION_FRAMEWORK)
+        message(FATAL_ERROR "Foundation framework not found")
+    endif()
+
+    # 链接所需框架
+    target_link_libraries(mini_react_native
+        ${JAVASCRIPTCORE_FRAMEWORK}
+        ${IOKIT_FRAMEWORK}
+        ${FOUNDATION_FRAMEWORK}
+    )
 
     # macOS 特定设置
     if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -98,6 +119,11 @@ target_link_libraries(test_messagequeue mini_react_native)
 add_executable(test_module_framework examples/test_module_framework.cpp)
 target_include_directories(test_module_framework PRIVATE src)
 target_link_libraries(test_module_framework mini_react_native)
+
+# DeviceInfo 模块测试可执行文件
+add_executable(test_deviceinfo examples/test_deviceinfo.cpp)
+target_include_directories(test_deviceinfo PRIVATE src)
+target_link_libraries(test_deviceinfo mini_react_native)
 
 # 安装配置（make install 时才会执行）
 # 安装静态库到 /usr/local/lib 下

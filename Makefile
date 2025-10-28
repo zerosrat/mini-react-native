@@ -42,8 +42,10 @@ test: build
 	@./$(BUILD_DIR)/mini_rn_test
 	@echo "\n📝 Test 2: MessageQueue validation test"
 	@./$(BUILD_DIR)/test_messagequeue
-		@echo "\n📝 Test 2: NativeModule validation test"
+	@echo "\n📝 Test 3: NativeModule validation test"
 	@./$(BUILD_DIR)/test_module_framework
+	@echo "\n📝 Test 4: DeviceInfo module test"
+	@./$(BUILD_DIR)/test_deviceinfo
 	@echo "\n✅ All tests complete"
 
 # 运行基础测试
@@ -66,6 +68,13 @@ test-module: build
 	@echo "🧪 Running NativeModule validation test..."
 	@./$(BUILD_DIR)/test_module_framework
 	@echo "✅ NativeModule test complete"
+
+# 运行 DeviceInfo 模块测试
+.PHONY: test-deviceinfo
+test-deviceinfo: build
+	@echo "🧪 Running DeviceInfo module test..."
+	@./$(BUILD_DIR)/test_deviceinfo
+	@echo "✅ DeviceInfo test complete"
 
 # 清理构建文件
 .PHONY: clean
@@ -141,6 +150,8 @@ help:
 	@echo "  make test             - 运行所有测试"
 	@echo "  make test-basic       - 仅运行基础功能测试"
 	@echo "  make test-messagequeue- 仅运行 MessageQueue 测试"
+	@echo "  make test-module      - 仅运行 NativeModule 测试"
+	@echo "  make test-deviceinfo  - 仅运行 DeviceInfo 模块测试"
 	@echo ""
 	@echo "开发工具:"
 	@echo "  make install-deps     - 安装开发依赖"

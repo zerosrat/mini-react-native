@@ -1,7 +1,7 @@
 #ifndef MOCKMODULE_H
 #define MOCKMODULE_H
 
-#include "../src/modules/NativeModule.h"
+#include "common/modules/NativeModule.h"
 #include <iostream>
 
 /**

@@ -2,7 +2,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "bridge/JSCExecutor.h"
+#include "common/bridge/JSCExecutor.h"
 
 using namespace mini_rn::bridge;
 
