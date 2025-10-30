@@ -123,6 +123,13 @@ size_t ModuleRegistry::getModuleMethodCount(unsigned int moduleId) const {
     return modules_[moduleId]->getMethods().size();
 }
 
+std::vector<std::string> ModuleRegistry::getMethodNames(unsigned int moduleId) const {
+    if (!hasModule(moduleId)) {
+        return {};
+    }
+    return modules_[moduleId]->getMethods();
+}
+
 void ModuleRegistry::updateModuleNamesFromIndex(size_t startIndex) {
     for (size_t i = startIndex; i < modules_.size(); ++i) {
         if (modules_[i]) {

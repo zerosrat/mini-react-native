@@ -68,6 +68,12 @@ void JSCExecutor::initializeJSContext() {
   // 注入 Bridge 通信函数
   installBridgeFunctions();
 
+  // 注意：模块配置注入延迟到模块注册后
+  // injectModuleConfig() 将在 ModuleRegistry::registerModules() 后调用
+
+  // 加载核心 Bridge JavaScript 文件
+  loadCoreBridgeModules();
+
   std::cout << "[JSCExecutor] JavaScript context initialized successfully"
             << std::endl;
 }
@@ -215,6 +221,47 @@ void JSCExecutor::installBridgeFunctions() {
 
         } catch (const std::exception &e) {
           std::cout << "[Bridge] Exception in logging callback: " << e.what()
+                    << std::endl;
+        }
+
+        return JSValueMakeUndefined(ctx);
+      });
+
+  // 注入同步调用函数 (React Native 标准)
+  installGlobalFunction(
+      "nativeCallSyncHook",
+      [](JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject,
+         size_t argumentCount, const JSValueRef arguments[],
+         JSValueRef *exception) -> JSValueRef {
+        // 避免未使用参数的警告
+        (void)function;
+        (void)thisObject;
+        (void)exception;
+
+        std::cout << "[Bridge] nativeCallSyncHook called with "
+                  << argumentCount << " arguments" << std::endl;
+
+        try {
+          // 获取JSCExecutor实例
+          auto *executor = JSCExecutor::getCurrentInstance();
+          if (!executor) {
+            std::cout << "[Bridge] Error: No JSCExecutor instance available"
+                      << std::endl;
+            return JSValueMakeUndefined(ctx);
+          }
+
+          // 验证参数数量：moduleID, methodID, args
+          if (argumentCount != 3) {
+            std::cout << "[Bridge] Error: Expected 3 arguments (moduleID, methodID, args), got "
+                      << argumentCount << std::endl;
+            return JSValueMakeUndefined(ctx);
+          }
+
+          // 调用实例方法处理同步调用
+          return executor->nativeCallSyncHook(arguments[0], arguments[1], arguments[2]);
+
+        } catch (const std::exception &e) {
+          std::cout << "[Bridge] Exception in sync callback: " << e.what()
                     << std::endl;
         }
 
@@ -421,6 +468,61 @@ void JSCExecutor::nativeLoggingHook(JSValueRef level, JSValueRef message) {
   }
 }
 
+JSValueRef JSCExecutor::nativeCallSyncHook(JSValueRef moduleID, JSValueRef methodID, JSValueRef args) {
+  std::cout << "[JSCExecutor] nativeCallSyncHook called (instance method)" << std::endl;
+
+  try {
+    // 将JSValue参数转换为C++类型
+    double moduleIdDouble = JSValueToNumber(m_context, moduleID, nullptr);
+    double methodIdDouble = JSValueToNumber(m_context, methodID, nullptr);
+    unsigned int moduleIdInt = static_cast<unsigned int>(moduleIdDouble);
+    unsigned int methodIdInt = static_cast<unsigned int>(methodIdDouble);
+
+    std::cout << "[JSCExecutor] Sync call - Module: " << moduleIdInt
+              << ", Method: " << methodIdInt << std::endl;
+
+    // 将参数转换为JSON字符串
+    std::string argsJson = jsValueToJSONString(args);
+
+    // 检查模块注册器是否可用
+    if (!m_moduleRegistry) {
+      std::cout << "[JSCExecutor] Error: ModuleRegistry not available for sync call" << std::endl;
+      return JSValueMakeNull(m_context);
+    }
+
+    // 对于同步调用，我们需要立即获取结果
+    // 这里我们使用一个简化的实现：直接调用模块方法并等待结果
+
+    // 检查模块是否存在
+    if (!m_moduleRegistry->hasModule(moduleIdInt)) {
+      std::cout << "[JSCExecutor] Error: Module " << moduleIdInt << " not found for sync call" << std::endl;
+      return JSValueMakeNull(m_context);
+    }
+
+    // 获取模块名称用于调试
+    std::string moduleName = m_moduleRegistry->getModuleName(moduleIdInt);
+    std::cout << "[JSCExecutor] Sync call to module: " << moduleName << std::endl;
+
+    // 对于同步方法，我们需要特殊处理
+    // 在这个简化实现中，我们只支持DeviceInfo.getSystemVersion的同步调用
+    if (moduleName == "DeviceInfo" && methodIdInt == 1) {
+      // getSystemVersion 方法的同步实现
+      std::string result = "14.0";  // 模拟系统版本
+      std::cout << "[JSCExecutor] Sync method returned: " << result << std::endl;
+      return stringToJSValue(result);
+    }
+
+    // 对于其他方法，返回错误
+    std::cout << "[JSCExecutor] Warning: Sync call not supported for "
+              << moduleName << "." << methodIdInt << std::endl;
+    return JSValueMakeNull(m_context);
+
+  } catch (const std::exception &e) {
+    std::cout << "[JSCExecutor] Error in nativeCallSyncHook: " << e.what() << std::endl;
+    return JSValueMakeNull(m_context);
+  }
+}
+
 void JSCExecutor::processBridgeMessage(
     const mini_rn::bridge::BridgeMessage &message) {
   std::cout << "[JSCExecutor] Processing Bridge message with "
@@ -464,24 +566,248 @@ void JSCExecutor::handleModuleCallback(int callId, const std::string &result,
             << ", Result: " << result << std::endl;
 
   try {
-    // TODO: 实现将结果返回给 JavaScript 的机制
-    // 这需要调用 JavaScript 的回调函数，类似于：
-    // - 如果是成功回调：callJSFunction("RCTDeviceEventEmitter", "emit",
-    // [callId, result])
-    // - 如果是错误回调：callJSFunction("RCTDeviceEventEmitter", "emit",
-    // [callId, null, error])
+    // 实现将结果返回给 JavaScript 的机制
+    // 调用 JavaScript 的 invokeCallbackAndReturnFlushedQueue 方法
 
-    // 目前暂时只打印日志，在任务 3.2 实现具体模块时会完善这个机制
+    // 获取全局 __fbBatchedBridge 对象
+    JSStringRef bridgeName = JSStringCreateWithUTF8CString("__fbBatchedBridge");
+    JSValueRef bridgeValue = JSObjectGetProperty(m_context, m_globalObject, bridgeName, nullptr);
+    JSStringRelease(bridgeName);
+
+    if (!JSValueIsObject(m_context, bridgeValue)) {
+      std::cout << "[JSCExecutor] Warning: __fbBatchedBridge not available" << std::endl;
+      return;
+    }
+
+    JSObjectRef bridgeObject = JSValueToObject(m_context, bridgeValue, nullptr);
+
+    // 获取 invokeCallbackAndReturnFlushedQueue 方法
+    JSStringRef methodName = JSStringCreateWithUTF8CString("invokeCallbackAndReturnFlushedQueue");
+    JSValueRef methodValue = JSObjectGetProperty(m_context, bridgeObject, methodName, nullptr);
+    JSStringRelease(methodName);
+
+    if (!JSValueIsObject(m_context, methodValue)) {
+      std::cout << "[JSCExecutor] Warning: invokeCallbackAndReturnFlushedQueue not available" << std::endl;
+      return;
+    }
+
+    // 准备回调参数
+    // React Native 回调约定：第一个参数是错误，后续参数是结果
+    std::string argsJson;
     if (isError) {
-      std::cout << "[JSCExecutor] Module call failed: " << result << std::endl;
+      // 错误情况：[error]
+      argsJson = "[\"" + result + "\"]";
     } else {
-      std::cout << "[JSCExecutor] Module call succeeded: " << result
-                << std::endl;
+      // 成功情况：[null, result]
+      argsJson = "[null, \"" + result + "\"]";
+    }
+
+    // 创建参数数组
+    JSValueRef arguments[2];
+    arguments[0] = JSValueMakeNumber(m_context, callId);  // callbackID
+
+    // 解析 JSON 参数
+    JSStringRef argsStr = JSStringCreateWithUTF8CString(argsJson.c_str());
+    JSValueRef argsValue = JSValueMakeFromJSONString(m_context, argsStr);
+    JSStringRelease(argsStr);
+
+    if (!argsValue) {
+      // JSON 解析失败，创建简单数组
+      JSValueRef simpleArgs[1];
+      simpleArgs[0] = stringToJSValue(result);
+      argsValue = JSObjectMakeArray(m_context, 1, simpleArgs, nullptr);
+    }
+
+    arguments[1] = argsValue;  // args
+
+    // 调用 JavaScript 回调方法
+    JSValueRef exception = nullptr;
+    JSValueRef callResult = JSObjectCallAsFunction(
+        m_context,
+        (JSObjectRef)methodValue,
+        bridgeObject,  // thisObject
+        2,             // argumentCount
+        arguments,     // arguments
+        &exception
+    );
+
+    if (exception) {
+      handleJSException(exception);
+      std::cout << "[JSCExecutor] Error calling JavaScript callback" << std::endl;
+    } else {
+      // 避免未使用变量的警告
+      (void)callResult;
+      std::cout << "[JSCExecutor] JavaScript callback executed successfully" << std::endl;
     }
 
   } catch (const std::exception &e) {
     std::cout << "[JSCExecutor] Error in handleModuleCallback: " << e.what()
               << std::endl;
+  }
+}
+
+void JSCExecutor::injectModuleConfig() {
+  std::cout << "[JSCExecutor] Injecting module configuration..." << std::endl;
+
+  try {
+    // 获取所有注册的模块配置
+    if (!m_moduleRegistry) {
+      std::cout << "[JSCExecutor] Warning: ModuleRegistry not available" << std::endl;
+      return;
+    }
+
+    // 创建 __fbBatchedBridgeConfig 对象
+    // 格式：{ remoteModuleConfig: [[moduleName, constants, methods, promiseMethods, syncMethods], ...] }
+
+    JSObjectRef bridgeConfig = JSObjectMake(m_context, nullptr, nullptr);
+
+    // 创建 remoteModuleConfig 数组
+    auto moduleNames = m_moduleRegistry->moduleNames();
+    size_t moduleCount = moduleNames.size();
+
+    if (moduleCount == 0) {
+      std::cout << "[JSCExecutor] No modules registered, creating empty config" << std::endl;
+
+      // 创建空的 remoteModuleConfig 数组
+      JSValueRef emptyArray = JSObjectMakeArray(m_context, 0, nullptr, nullptr);
+
+      // 设置 remoteModuleConfig 属性
+      JSStringRef remoteModuleConfigKey = JSStringCreateWithUTF8CString("remoteModuleConfig");
+      JSObjectSetProperty(m_context, bridgeConfig, remoteModuleConfigKey, emptyArray, kJSPropertyAttributeNone, nullptr);
+      JSStringRelease(remoteModuleConfigKey);
+    } else {
+      // 创建模块配置数组
+      std::vector<JSValueRef> moduleConfigs;
+      moduleConfigs.reserve(moduleCount);
+
+      for (size_t moduleId = 0; moduleId < moduleCount; moduleId++) {
+        const std::string& moduleName = moduleNames[moduleId];
+        auto methodNames = m_moduleRegistry->getMethodNames(moduleId);
+
+        // 创建单个模块配置数组：[moduleName, constants, methods, promiseMethods, syncMethods]
+        std::vector<JSValueRef> moduleConfigElements;
+        moduleConfigElements.reserve(5);
+
+        // 1. 模块名称
+        JSStringRef moduleNameStr = JSStringCreateWithUTF8CString(moduleName.c_str());
+        moduleConfigElements.push_back(JSValueMakeString(m_context, moduleNameStr));
+        JSStringRelease(moduleNameStr);
+
+        // 2. 常量 (目前设为 null)
+        moduleConfigElements.push_back(JSValueMakeNull(m_context));
+
+        // 3. 方法名数组
+        std::vector<JSValueRef> methodNameValues;
+        methodNameValues.reserve(methodNames.size());
+        for (const auto& methodName : methodNames) {
+          JSStringRef methodNameStr = JSStringCreateWithUTF8CString(methodName.c_str());
+          methodNameValues.push_back(JSValueMakeString(m_context, methodNameStr));
+          JSStringRelease(methodNameStr);
+        }
+        JSValueRef methodsArray = JSObjectMakeArray(m_context, methodNameValues.size(),
+                                                   methodNameValues.empty() ? nullptr : methodNameValues.data(), nullptr);
+        moduleConfigElements.push_back(methodsArray);
+
+        // 4. Promise 方法ID数组
+        std::vector<JSValueRef> promiseMethodIds;
+        if (moduleName == "DeviceInfo") {
+          promiseMethodIds.push_back(JSValueMakeNumber(m_context, 0)); // getUniqueId
+        }
+        JSValueRef promiseMethodsArray = JSObjectMakeArray(m_context, promiseMethodIds.size(),
+                                                          promiseMethodIds.empty() ? nullptr : promiseMethodIds.data(), nullptr);
+        moduleConfigElements.push_back(promiseMethodsArray);
+
+        // 5. 同步方法ID数组
+        std::vector<JSValueRef> syncMethodIds;
+        if (moduleName == "DeviceInfo") {
+          syncMethodIds.push_back(JSValueMakeNumber(m_context, 1)); // getSystemVersion
+        }
+        JSValueRef syncMethodsArray = JSObjectMakeArray(m_context, syncMethodIds.size(),
+                                                       syncMethodIds.empty() ? nullptr : syncMethodIds.data(), nullptr);
+        moduleConfigElements.push_back(syncMethodsArray);
+
+        // 创建模块配置数组
+        JSValueRef moduleConfigArray = JSObjectMakeArray(m_context, moduleConfigElements.size(),
+                                                         moduleConfigElements.data(), nullptr);
+        moduleConfigs.push_back(moduleConfigArray);
+
+        std::cout << "[JSCExecutor] Created config for module: " << moduleName
+                  << " with " << methodNames.size() << " methods" << std::endl;
+      }
+
+      // 创建 remoteModuleConfig 数组
+      JSValueRef remoteModuleConfigArray = JSObjectMakeArray(m_context, moduleConfigs.size(),
+                                                             moduleConfigs.data(), nullptr);
+
+      // 设置 remoteModuleConfig 属性
+      JSStringRef remoteModuleConfigKey = JSStringCreateWithUTF8CString("remoteModuleConfig");
+      JSObjectSetProperty(m_context, bridgeConfig, remoteModuleConfigKey, remoteModuleConfigArray,
+                         kJSPropertyAttributeNone, nullptr);
+      JSStringRelease(remoteModuleConfigKey);
+    }
+
+    // 将 bridgeConfig 设置为 global.__fbBatchedBridgeConfig
+    JSStringRef bridgeConfigKey = JSStringCreateWithUTF8CString("__fbBatchedBridgeConfig");
+    JSObjectSetProperty(m_context, m_globalObject, bridgeConfigKey, bridgeConfig,
+                       kJSPropertyAttributeNone, nullptr);
+    JSStringRelease(bridgeConfigKey);
+
+    std::cout << "[JSCExecutor] Module configuration injected successfully using native objects" << std::endl;
+
+  } catch (const std::exception& e) {
+    std::cout << "[JSCExecutor] Error in injectModuleConfig: " << e.what() << std::endl;
+  }
+}
+
+void JSCExecutor::loadCoreBridgeModules() {
+  std::cout << "[JSCExecutor] Loading core Bridge JavaScript modules..." << std::endl;
+
+  try {
+    // 简化的 require 函数实现
+    // 在实际项目中，这些文件会被打包工具处理
+    std::string requireFunction = R"(
+      // 简化的模块加载系统
+      global.modules = {};
+      global.require = function(modulePath) {
+        if (global.modules[modulePath]) {
+          return global.modules[modulePath];
+        }
+
+        // 模拟模块缓存
+        var module = { exports: {} };
+        global.modules[modulePath] = module.exports;
+
+        // 这里应该加载实际的模块代码
+        // 由于我们在 C++ 环境中，暂时返回空对象
+        console.log('[require] Loading module:', modulePath);
+
+        return module.exports;
+      };
+
+      // 设置模块导出辅助
+      global.module = { exports: {} };
+    )";
+
+    JSStringRef scriptStr = JSStringCreateWithUTF8CString(requireFunction.c_str());
+    JSValueRef exception = nullptr;
+    JSValueRef result = JSEvaluateScript(m_context, scriptStr, nullptr, nullptr, 0, &exception);
+
+    if (exception) {
+      handleJSException(exception);
+      std::cout << "[JSCExecutor] Error: Failed to setup module system" << std::endl;
+    } else {
+      // 避免未使用变量的警告
+      (void)result;
+      std::cout << "[JSCExecutor] Module system setup completed" << std::endl;
+    }
+
+    JSStringRelease(scriptStr);
+
+    // 注意：在实际的实现中，我们会在这里加载 MessageQueue.js 和 BatchedBridge.js
+    // 但是由于文件系统访问的复杂性，我们在测试脚本中直接使用 require() 来加载这些模块
+
+  } catch (const std::exception& e) {
+    std::cout << "[JSCExecutor] Error in loadCoreBridgeModules: " << e.what() << std::endl;
   }
 }
 

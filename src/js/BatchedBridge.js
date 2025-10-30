@@ -37,6 +37,31 @@ Object.defineProperty(global, '__fbBatchedBridge', {
   value: BatchedBridge,
 });
 
+// 自动初始化 NativeModules 系统
+if (typeof require !== 'undefined') {
+  try {
+    const NativeModules = require('./NativeModule.js');
+
+    // 延迟初始化，确保模块配置已经注入
+    setTimeout(() => {
+      if (global.__fbBatchedBridgeConfig) {
+        console.log('[BatchedBridge] Initializing NativeModules system...');
+        NativeModules.initialize();
+
+        // 将 NativeModules 暴露到全局，方便测试和调试
+        global.NativeModules = NativeModules;
+
+        console.log('[BatchedBridge] NativeModules system initialized');
+      } else {
+        console.log('[BatchedBridge] Module config not ready, NativeModules will initialize on first use');
+      }
+    }, 0);
+
+  } catch (error) {
+    console.log('[BatchedBridge] NativeModules not available:', error.message);
+  }
+}
+
 // 导出模块
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = BatchedBridge;

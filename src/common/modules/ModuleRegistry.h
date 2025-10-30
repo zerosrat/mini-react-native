@@ -118,6 +118,13 @@ public:
      */
     size_t getModuleMethodCount(unsigned int moduleId) const;
 
+    /**
+     * 获取模块的方法名称列表
+     * @param moduleId 模块 ID
+     * @return 模块的方法名称列表，如果模块不存在返回空列表
+     */
+    std::vector<std::string> getMethodNames(unsigned int moduleId) const;
+
 private:
     /**
      * 模块存储

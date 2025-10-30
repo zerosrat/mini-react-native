@@ -154,6 +154,12 @@ class JSCExecutor {
     return m_moduleRegistry.get();
   }
 
+  /**
+   * 重新注入模块配置
+   * 在模块注册完成后调用，更新 JavaScript 环境中的模块配置
+   */
+  void refreshModuleConfig();
+
  private:
   /**
    * 初始化 JavaScript 执行环境
@@ -174,6 +180,18 @@ class JSCExecutor {
    * 给 JS 注入 React Native Bridge 的核心函数
    */
   void installBridgeFunctions();
+
+  /**
+   * 注入模块配置到 JavaScript 环境
+   * 创建 __fbBatchedBridgeConfig 全局对象，包含所有已注册模块的配置信息
+   */
+  void injectModuleConfig();
+
+  /**
+   * 加载核心 Bridge JavaScript 模块
+   * 设置基础的模块加载系统和核心 Bridge 组件
+   */
+  void loadCoreBridgeModules();
 
   /**
    * 处理 JavaScript 异常
@@ -214,6 +232,16 @@ class JSCExecutor {
    * @param message 日志消息
    */
   void nativeLoggingHook(JSValueRef level, JSValueRef message);
+
+  /**
+   * 处理来自JavaScript的同步调用请求
+   * 对齐React Native实现：JSCExecutor::nativeCallSyncHook
+   * @param moduleID 模块ID
+   * @param methodID 方法ID
+   * @param args 参数数组
+   * @return 同步调用的结果
+   */
+  JSValueRef nativeCallSyncHook(JSValueRef moduleID, JSValueRef methodID, JSValueRef args);
 
   /**
    * 静态实例管理（用于静态回调访问实例方法）
