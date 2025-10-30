@@ -160,6 +160,12 @@ class JSCExecutor {
    */
   void refreshModuleConfig();
 
+  /**
+   * 注入模块配置到 JavaScript 环境
+   * 创建 __fbBatchedBridgeConfig 全局对象，包含所有已注册模块的配置信息
+   */
+  void injectModuleConfig();
+
  private:
   /**
    * 初始化 JavaScript 执行环境
@@ -180,12 +186,6 @@ class JSCExecutor {
    * 给 JS 注入 React Native Bridge 的核心函数
    */
   void installBridgeFunctions();
-
-  /**
-   * 注入模块配置到 JavaScript 环境
-   * 创建 __fbBatchedBridgeConfig 全局对象，包含所有已注册模块的配置信息
-   */
-  void injectModuleConfig();
 
   /**
    * 加载核心 Bridge JavaScript 模块

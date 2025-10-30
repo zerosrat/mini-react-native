@@ -1,6 +1,8 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <fstream>
+#include <sstream>
 
 #include "common/bridge/JSCExecutor.h"
 #include "common/modules/DeviceInfoModule.h"
@@ -8,6 +10,35 @@
 
 using namespace mini_rn::bridge;
 using namespace mini_rn::modules;
+
+/**
+ * 读取文件内容到字符串
+ * @param filePath 文件路径
+ * @return 文件内容字符串，如果失败返回空字符串
+ */
+std::string readFile(const std::string& filePath) {
+  try {
+    std::ifstream file(filePath);
+    if (!file.is_open()) {
+      std::cout << "[File Reader] Error: Cannot open file: " << filePath << std::endl;
+      return "";
+    }
+
+    std::ostringstream buffer;
+    buffer << file.rdbuf();
+    file.close();
+
+    std::string content = buffer.str();
+    std::cout << "[File Reader] Successfully read file: " << filePath
+              << " (size: " << content.length() << " bytes)" << std::endl;
+
+    return content;
+  } catch (const std::exception& e) {
+    std::cout << "[File Reader] Exception reading file " << filePath
+              << ": " << e.what() << std::endl;
+    return "";
+  }
+}
 
 /**
  * 测试 DeviceInfo 模块的集成和功能
@@ -104,37 +135,29 @@ void testDeviceInfoJavaScriptIntegration() {
     modules.push_back(std::move(deviceInfoModule));
     moduleRegistry->registerModules(std::move(modules));
 
-    // 执行 JavaScript 代码来测试 DeviceInfo 模块
-    std::string testScript = R"(
-            console.log("Testing DeviceInfo module from JavaScript...");
+    // 注入模块配置到 JavaScript 环境
+    std::cout << "\n   ✓ Injecting module configuration into JavaScript environment..." << std::endl;
+    executor.injectModuleConfig();
 
-            // 测试直接调用 Bridge 函数
-            if (typeof nativeFlushQueueImmediate === 'function') {
-                console.log("Calling DeviceInfo.getUniqueId...");
-                // 调用 DeviceInfo 模块 (moduleId=0) 的 getUniqueId 方法 (methodId=0)
-                nativeFlushQueueImmediate([[0], [0], [[]], [2001]]);
+    // 加载真实的 JavaScript 测试文件
+    std::cout << "\n4. Loading JavaScript integration test from file..." << std::endl;
 
-                console.log("Calling DeviceInfo.getSystemVersion...");
-                // 调用 DeviceInfo 模块的 getSystemVersion 方法
-                nativeFlushQueueImmediate([[0], [1], [[]], [2002]]);
+    std::string scriptPath = "examples/scripts/test_deviceinfo.js";
+    std::string testScript = readFile(scriptPath);
 
-                console.log("Calling DeviceInfo.getModel...");
-                // 调用 DeviceInfo 模块的 getModel 方法
-                nativeFlushQueueImmediate([[0], [2], [[]], [2003]]);
+    if (testScript.empty()) {
+      std::cout << "[Error] Failed to load JavaScript test file: " << scriptPath << std::endl;
+      std::cout << "        Make sure the file exists and is readable." << std::endl;
+      return;
+    }
 
-                console.log("Calling DeviceInfo.getSystemName...");
-                // 调用 DeviceInfo 模块的 getSystemName 方法
-                nativeFlushQueueImmediate([[0], [3], [[]], [2004]]);
-            } else {
-                console.log("nativeFlushQueueImmediate not available!");
-            }
+    std::cout << "   ✓ JavaScript test file loaded successfully" << std::endl;
+    std::cout << "   ✓ Executing real DeviceInfo integration test..." << std::endl;
 
-            console.log("JavaScript DeviceInfo test completed.");
-        )";
+    executor.loadApplicationScript(testScript, scriptPath);
 
-    executor.loadApplicationScript(testScript, "deviceinfo_test.js");
-
-    std::cout << "\n4. JavaScript Integration Test Completed!" << std::endl;
+    std::cout << "\n5. JavaScript Integration Test Completed!" << std::endl;
+    std::cout << "   Check the JavaScript output above for detailed test results." << std::endl;
 
   } catch (const std::exception& e) {
     std::cout << "\nJavaScript test failed with exception: " << e.what()
