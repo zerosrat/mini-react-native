@@ -139,22 +139,51 @@ void testDeviceInfoJavaScriptIntegration() {
     std::cout << "\n   ✓ Injecting module configuration into JavaScript environment..." << std::endl;
     executor.injectModuleConfig();
 
-    // 加载真实的 JavaScript 测试文件
-    std::cout << "\n4. Loading JavaScript integration test from file..." << std::endl;
+    // 按顺序加载 JavaScript 模块文件
+    std::cout << "\n4. Loading JavaScript modules sequentially..." << std::endl;
 
-    std::string scriptPath = "examples/scripts/test_deviceinfo.js";
-    std::string testScript = readFile(scriptPath);
+    // 定义模块加载顺序和路径
+    std::vector<std::pair<std::string, std::string>> jsModules = {
+        {"MessageQueue", "src/js/MessageQueue.js"},
+        {"BatchedBridge", "src/js/BatchedBridge.js"},
+        {"NativeModule", "src/js/NativeModule.js"},
+        {"DeviceInfo", "src/js/DeviceInfo.js"}
+    };
+
+    // 逐个加载模块文件
+    for (const auto& module : jsModules) {
+        const std::string& moduleName = module.first;
+        const std::string& modulePath = module.second;
+
+        std::cout << "   Loading " << moduleName << " from " << modulePath << "..." << std::endl;
+
+        std::string moduleScript = readFile(modulePath);
+        if (moduleScript.empty()) {
+            std::cout << "[Error] Failed to load " << moduleName << " from: " << modulePath << std::endl;
+            std::cout << "        Make sure the file exists and is readable." << std::endl;
+            return;
+        }
+
+        executor.loadApplicationScript(moduleScript, modulePath);
+        std::cout << "   ✓ " << moduleName << " loaded successfully" << std::endl;
+    }
+
+    // 加载测试文件
+    std::cout << "\n5. Loading DeviceInfo integration test..." << std::endl;
+
+    std::string testPath = "examples/scripts/test_deviceinfo.js";
+    std::string testScript = readFile(testPath);
 
     if (testScript.empty()) {
-      std::cout << "[Error] Failed to load JavaScript test file: " << scriptPath << std::endl;
+      std::cout << "[Error] Failed to load test file: " << testPath << std::endl;
       std::cout << "        Make sure the file exists and is readable." << std::endl;
       return;
     }
 
-    std::cout << "   ✓ JavaScript test file loaded successfully" << std::endl;
-    std::cout << "   ✓ Executing real DeviceInfo integration test..." << std::endl;
+    std::cout << "   ✓ Test file loaded successfully" << std::endl;
+    std::cout << "   ✓ Executing DeviceInfo integration test..." << std::endl;
 
-    executor.loadApplicationScript(testScript, scriptPath);
+    executor.loadApplicationScript(testScript, testPath);
 
     std::cout << "\n5. JavaScript Integration Test Completed!" << std::endl;
     std::cout << "   Check the JavaScript output above for detailed test results." << std::endl;

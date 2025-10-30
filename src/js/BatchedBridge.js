@@ -14,18 +14,31 @@
 
 // MessageQueue 获取逻辑（适配无打包工具环境）
 var MessageQueueClass;
-if (typeof require !== 'undefined') {
-  // Node.js 环境
-  MessageQueueClass = require('./MessageQueue.js');
-} else if (typeof global !== 'undefined' && global.MessageQueue) {
+console.log('[BatchedBridge] Debug - require:', typeof require);
+console.log('[BatchedBridge] Debug - global:', typeof global);
+console.log('[BatchedBridge] Debug - global.MessageQueue:', typeof global.MessageQueue, global.MessageQueue);
+console.log('[BatchedBridge] Debug - MessageQueue in scope:', typeof MessageQueue);
+
+// 在嵌入式环境中，优先使用 global.MessageQueue，因为 require 可能不可靠
+if (typeof global !== 'undefined' && global.MessageQueue) {
   // 全局环境
+  console.log('[BatchedBridge] Using global.MessageQueue');
   MessageQueueClass = global.MessageQueue;
 } else if (typeof MessageQueue !== 'undefined') {
   // 当前作用域中已经存在 MessageQueue
+  console.log('[BatchedBridge] Using scope MessageQueue');
   MessageQueueClass = MessageQueue;
+} else if (typeof require !== 'undefined') {
+  // Node.js 环境 - 最后尝试 require
+  console.log('[BatchedBridge] Using require for MessageQueue');
+  MessageQueueClass = require('./MessageQueue.js');
 } else {
   console.error('[BatchedBridge] MessageQueue not found');
 }
+
+// 调试信息
+console.log('[BatchedBridge] MessageQueueClass type:', typeof MessageQueueClass);
+console.log('[BatchedBridge] MessageQueueClass:', MessageQueueClass);
 
 // 创建 MessageQueue 实例作为 BatchedBridge（官方 RN 方式）
 const BatchedBridge = new MessageQueueClass();

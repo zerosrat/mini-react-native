@@ -17,7 +17,17 @@
 
 'use strict';
 
-const NativeModules = require('./NativeModule');
+// 获取 NativeModules（适配多种加载方式）
+const NativeModules = (function() {
+  if (typeof require !== 'undefined') {
+    return require('./NativeModule');
+  } else if (typeof global !== 'undefined' && global.NativeModules) {
+    return global.NativeModules;
+  } else {
+    console.error('[DeviceInfo] NativeModules not found');
+    return null;
+  }
+})();
 
 // 获取 DeviceInfo 原生模块
 // 在新的系统中，模块会自动初始化并注册到 NativeModules 中
@@ -134,4 +144,14 @@ Object.defineProperty(DeviceInfo, 'Constants', {
   }
 });
 
-module.exports = DeviceInfo;
+// 导出模块
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = DeviceInfo;
+} else if (typeof global !== 'undefined') {
+  global.DeviceInfo = DeviceInfo;
+}
+
+// 兼容性：支持 window 环境
+if (typeof window !== 'undefined') {
+  window.DeviceInfo = DeviceInfo;
+}
