@@ -337,6 +337,41 @@ void JSCExecutor::handleJSException(JSValueRef exception) {
   std::string errorMsg = jsValueToString(exception);
   std::cout << "[JSCExecutor] JavaScript Exception: " << errorMsg << std::endl;
 
+  // 尝试提取堆栈跟踪信息
+  try {
+    // 检查异常是否为对象（Error 对象）
+    if (JSValueIsObject(m_context, exception)) {
+      JSObjectRef errorObj = JSValueToObject(m_context, exception, nullptr);
+
+      // 尝试获取 stack 属性
+      JSStringRef stackPropName = JSStringCreateWithUTF8CString("stack");
+      JSValueRef stackValue = JSObjectGetProperty(m_context, errorObj, stackPropName, nullptr);
+      JSStringRelease(stackPropName);
+
+      if (stackValue != nullptr && !JSValueIsUndefined(m_context, stackValue) && !JSValueIsNull(m_context, stackValue)) {
+        std::string stackTrace = jsValueToString(stackValue);
+        if (!stackTrace.empty()) {
+          std::cout << "Stack Trace:" << std::endl;
+          std::cout << stackTrace << std::endl;
+
+          // 如果有异常处理器，将堆栈信息也包含在内
+          if (m_exceptionHandler) {
+            std::string fullErrorMsg = errorMsg + "\nStack Trace:\n" + stackTrace;
+            m_exceptionHandler(fullErrorMsg);
+            return;
+          }
+        }
+      } else {
+        std::cout << "[JSCExecutor] No stack trace available for this exception" << std::endl;
+      }
+    } else {
+      std::cout << "[JSCExecutor] Exception is not an Error object, no stack trace available" << std::endl;
+    }
+  } catch (const std::exception& e) {
+    std::cout << "[JSCExecutor] Error while extracting stack trace: " << e.what() << std::endl;
+  }
+
+  // 调用原有的异常处理器（如果没有堆栈信息的话）
   if (m_exceptionHandler) {
     m_exceptionHandler(errorMsg);
   }
