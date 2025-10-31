@@ -188,12 +188,6 @@ class JSCExecutor {
   void installBridgeFunctions();
 
   /**
-   * 加载核心 Bridge JavaScript 模块
-   * 设置基础的模块加载系统和核心 Bridge 组件
-   */
-  void loadCoreBridgeModules();
-
-  /**
    * 处理 JavaScript 异常
    */
   void handleJSException(JSValueRef exception);
@@ -241,7 +235,8 @@ class JSCExecutor {
    * @param args 参数数组
    * @return 同步调用的结果
    */
-  JSValueRef nativeCallSyncHook(JSValueRef moduleID, JSValueRef methodID, JSValueRef args);
+  JSValueRef nativeCallSyncHook(JSValueRef moduleID, JSValueRef methodID,
+                                JSValueRef args);
 
   /**
    * 静态实例管理（用于静态回调访问实例方法）

@@ -360,20 +360,20 @@ class MessageQueue {
 }
 
 // 导出 MessageQueue 类供其他模块使用
-console.log('[MessageQueue] Export logic - module:', typeof module, 'global:', typeof global);
-console.log('[MessageQueue] MessageQueue class before export:', typeof MessageQueue, MessageQueue);
+console.log('[MessageQueue] Export logic - module:', typeof module, 'global:', typeof global)
+console.log('[MessageQueue] MessageQueue class before export:', typeof MessageQueue)
 
 // 在嵌入式环境中，我们需要同时设置 module.exports 和 global
 // 因为 require 函数可能不工作正常，我们需要确保 global 访问可用
 if (typeof module !== 'undefined' && module.exports) {
-  console.log('[MessageQueue] Setting module.exports');
+  console.log('[MessageQueue] Setting module.exports')
   module.exports = MessageQueue
 }
 
 if (typeof global !== 'undefined') {
-  console.log('[MessageQueue] Setting global.MessageQueue');
+  console.log('[MessageQueue] Setting global.MessageQueue')
   global.MessageQueue = MessageQueue
-  console.log('[MessageQueue] After global assignment - global.MessageQueue:', typeof global.MessageQueue, global.MessageQueue);
+  console.log('[MessageQueue] After global assignment - global.MessageQueue:', typeof global.MessageQueue)
 }
 
 // 在全局作用域中注册（用于测试）
