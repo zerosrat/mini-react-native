@@ -179,17 +179,13 @@ void DeviceInfoModule::sendErrorCallback(int callId, const std::string& error) {
 }
 
 std::string DeviceInfoModule::createSuccessResponse(const std::string& data) const {
-    // 创建 RN 兼容的成功响应格式
-    std::ostringstream oss;
-    oss << "{\"success\":true,\"data\":\"" << data << "\"}";
-    return oss.str();
+    // React Native 回调约定：直接返回数据，不需要包装对象
+    return data;
 }
 
 std::string DeviceInfoModule::createErrorResponse(const std::string& error) const {
-    // 创建 RN 兼容的错误响应格式
-    std::ostringstream oss;
-    oss << "{\"success\":false,\"error\":\"" << error << "\"}";
-    return oss.str();
+    // React Native 回调约定：直接返回错误消息
+    return error;
 }
 
 } // namespace modules
