@@ -1,8 +1,8 @@
+#include <fstream>
 #include <iostream>
 #include <memory>
-#include <vector>
-#include <fstream>
 #include <sstream>
+#include <vector>
 
 #include "common/bridge/JSCExecutor.h"
 #include "common/modules/DeviceInfoModule.h"
@@ -20,7 +20,8 @@ std::string readFile(const std::string& filePath) {
   try {
     std::ifstream file(filePath);
     if (!file.is_open()) {
-      std::cout << "[File Reader] Error: Cannot open file: " << filePath << std::endl;
+      std::cout << "[File Reader] Error: Cannot open file: " << filePath
+                << std::endl;
       return "";
     }
 
@@ -34,8 +35,8 @@ std::string readFile(const std::string& filePath) {
 
     return content;
   } catch (const std::exception& e) {
-    std::cout << "[File Reader] Exception reading file " << filePath
-              << ": " << e.what() << std::endl;
+    std::cout << "[File Reader] Exception reading file " << filePath << ": "
+              << e.what() << std::endl;
     return "";
   }
 }
@@ -138,7 +139,9 @@ void testDeviceInfoJavaScriptIntegration() {
     moduleRegistry->registerModules(std::move(modules));
 
     // 注入模块配置到 JavaScript 环境
-    std::cout << "\n   ✓ Injecting module configuration into JavaScript environment..." << std::endl;
+    std::cout << "\n   ✓ Injecting module configuration into JavaScript "
+                 "environment..."
+              << std::endl;
     executor.injectModuleConfig();
 
     // 按顺序加载 JavaScript 模块文件
@@ -149,25 +152,27 @@ void testDeviceInfoJavaScriptIntegration() {
         {"MessageQueue", "src/js/MessageQueue.js"},
         {"BatchedBridge", "src/js/BatchedBridge.js"},
         {"NativeModule", "src/js/NativeModule.js"},
-        {"DeviceInfo", "src/js/DeviceInfo.js"}
-    };
+        {"DeviceInfo", "src/js/DeviceInfo.js"}};
 
     // 逐个加载模块文件
     for (const auto& module : jsModules) {
-        const std::string& moduleName = module.first;
-        const std::string& modulePath = module.second;
+      const std::string& moduleName = module.first;
+      const std::string& modulePath = module.second;
 
-        std::cout << "   Loading " << moduleName << " from " << modulePath << "..." << std::endl;
+      std::cout << "   Loading " << moduleName << " from " << modulePath
+                << "..." << std::endl;
 
-        std::string moduleScript = readFile(modulePath);
-        if (moduleScript.empty()) {
-            std::cout << "[Error] Failed to load " << moduleName << " from: " << modulePath << std::endl;
-            std::cout << "        Make sure the file exists and is readable." << std::endl;
-            return;
-        }
+      std::string moduleScript = readFile(modulePath);
+      if (moduleScript.empty()) {
+        std::cout << "[Error] Failed to load " << moduleName
+                  << " from: " << modulePath << std::endl;
+        std::cout << "        Make sure the file exists and is readable."
+                  << std::endl;
+        return;
+      }
 
-        executor.loadApplicationScript(moduleScript, modulePath);
-        std::cout << "   ✓ " << moduleName << " loaded successfully" << std::endl;
+      executor.loadApplicationScript(moduleScript, modulePath);
+      std::cout << "   ✓ " << moduleName << " loaded successfully" << std::endl;
     }
 
     // 加载测试文件
@@ -177,8 +182,10 @@ void testDeviceInfoJavaScriptIntegration() {
     std::string testScript = readFile(testPath);
 
     if (testScript.empty()) {
-      std::cout << "[Error] Failed to load test file: " << testPath << std::endl;
-      std::cout << "        Make sure the file exists and is readable." << std::endl;
+      std::cout << "[Error] Failed to load test file: " << testPath
+                << std::endl;
+      std::cout << "        Make sure the file exists and is readable."
+                << std::endl;
       return;
     }
 
@@ -188,7 +195,9 @@ void testDeviceInfoJavaScriptIntegration() {
     executor.loadApplicationScript(testScript, testPath);
 
     std::cout << "\n5. JavaScript Integration Test Completed!" << std::endl;
-    std::cout << "   Check the JavaScript output above for detailed test results." << std::endl;
+    std::cout
+        << "   Check the JavaScript output above for detailed test results."
+        << std::endl;
 
   } catch (const std::exception& e) {
     std::cout << "\nJavaScript test failed with exception: " << e.what()
