@@ -1,4 +1,5 @@
 #include "ModuleRegistry.h"
+#include "DeviceInfoModule.h"
 #include <iostream>
 #include <stdexcept>
 
@@ -128,6 +129,63 @@ std::vector<std::string> ModuleRegistry::getMethodNames(unsigned int moduleId) c
         return {};
     }
     return modules_[moduleId]->getMethods();
+}
+
+std::string ModuleRegistry::callSerializableNativeHook(unsigned int moduleId, unsigned int methodId,
+                                                      const std::string& params) {
+    // 避免未使用参数的警告
+    (void)params;
+    std::cout << "[ModuleRegistry] Calling serializable native hook - Module ID: " << moduleId
+              << ", Method ID: " << methodId << std::endl;
+
+    // 验证模块和方法 ID
+    if (!validateIds(moduleId, methodId)) {
+        std::string error = "Invalid module ID (" + std::to_string(moduleId) +
+                           ") or method ID (" + std::to_string(methodId) + ")";
+        std::cout << "[ModuleRegistry] Error: " << error << std::endl;
+        return "";
+    }
+
+    try {
+        NativeModule* module = modules_[moduleId].get();
+        std::vector<std::string> methods = module->getMethods();
+        std::string methodName = methods[methodId];
+        std::string moduleName = module->getName();
+
+        std::cout << "[ModuleRegistry] Sync calling method '" << methodName
+                  << "' on module '" << moduleName << "'" << std::endl;
+
+        // 特殊处理已知的同步方法
+        if (moduleName == "DeviceInfo") {
+            // 将 DeviceInfoModule 转换为具体类型以访问实现方法
+            // 注意：这里使用动态转换，在实际项目中可能需要更安全的类型检查
+            auto* deviceInfoModule = dynamic_cast<mini_rn::modules::DeviceInfoModule*>(module);
+            if (!deviceInfoModule) {
+                std::cout << "[ModuleRegistry] Error: Failed to cast to DeviceInfoModule" << std::endl;
+                return "";
+            }
+
+            if (methodName == "getSystemVersion") {
+                return deviceInfoModule->getSystemVersionImpl();
+            } else if (methodName == "getDeviceId") {
+                return deviceInfoModule->getDeviceIdImpl();
+            }
+        }
+
+        // 对于其他模块或方法，返回错误
+        std::cout << "[ModuleRegistry] Warning: Sync call not supported for "
+                  << moduleName << "." << methodName << std::endl;
+        return "";
+
+    } catch (const std::exception& e) {
+        std::string error = "Exception in sync module method: " + std::string(e.what());
+        std::cout << "[ModuleRegistry] Error: " << error << std::endl;
+        return "";
+    } catch (...) {
+        std::string error = "Unknown exception in sync module method";
+        std::cout << "[ModuleRegistry] Error: " << error << std::endl;
+        return "";
+    }
 }
 
 void ModuleRegistry::updateModuleNamesFromIndex(size_t startIndex) {

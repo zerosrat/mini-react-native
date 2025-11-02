@@ -61,6 +61,15 @@ public:
     std::map<std::string, std::string> getConstants() const override;
     void invoke(const std::string& methodName, const std::string& args, int callId) override;
 
+    /**
+     * 平台特定的设备信息获取接口（同步调用）
+     * 这些方法由平台特定的实现文件提供 (如 DeviceInfoModule.mm)
+     * 公开这些方法以支持同步调用
+     */
+    std::string getUniqueIdImpl() const;
+    std::string getSystemVersionImpl() const;
+    std::string getDeviceIdImpl() const;
+
 private:
     /**
      * 回调处理器
@@ -76,13 +85,6 @@ private:
     void handleGetSystemVersion(const std::string& args, int callId);
     void handleGetDeviceId(const std::string& args, int callId);
 
-    /**
-     * 平台特定的设备信息获取接口
-     * 这些方法由平台特定的实现文件提供 (如 DeviceInfoModule.mm)
-     */
-    std::string getUniqueIdImpl() const;
-    std::string getSystemVersionImpl() const;
-    std::string getDeviceIdImpl() const;
 
     /**
      * 工具方法

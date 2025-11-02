@@ -125,6 +125,21 @@ public:
      */
     std::vector<std::string> getMethodNames(unsigned int moduleId) const;
 
+    /**
+     * 调用可序列化的 Native Hook 方法（同步调用）
+     * 基于 React Native callSerializableNativeHook API
+     *
+     * 这个方法用于同步调用 Native 模块方法，直接返回结果而不通过回调。
+     * 主要用于需要立即返回结果的场景，如同步获取设备信息等。
+     *
+     * @param moduleId 模块 ID（对应 modules_ 数组的索引）
+     * @param methodId 方法 ID（对应模块方法列表的索引）
+     * @param params JSON 格式的参数字符串
+     * @return 方法执行结果的字符串，如果失败返回空字符串
+     */
+    std::string callSerializableNativeHook(unsigned int moduleId, unsigned int methodId,
+                                          const std::string& params);
+
 private:
     /**
      * 模块存储
