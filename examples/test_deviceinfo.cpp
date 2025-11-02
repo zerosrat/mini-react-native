@@ -94,13 +94,9 @@ void testDeviceInfoIntegration() {
     std::cout << "   - Testing getSystemVersion..." << std::endl;
     moduleRegistry->callNativeMethod(deviceInfoModuleId, 1, "[]", 1002);
 
-    // 测试 getModel (假设是第三个方法，methodId = 2)
-    std::cout << "   - Testing getModel..." << std::endl;
+    // 测试 getDeviceId (第三个方法，methodId = 2)
+    std::cout << "   - Testing getDeviceId..." << std::endl;
     moduleRegistry->callNativeMethod(deviceInfoModuleId, 2, "[]", 1003);
-
-    // 测试 getSystemName (假设是第四个方法，methodId = 3)
-    std::cout << "   - Testing getSystemName..." << std::endl;
-    moduleRegistry->callNativeMethod(deviceInfoModuleId, 3, "[]", 1004);
 
     std::cout << "\n3. DeviceInfo Integration Test Completed!" << std::endl;
 

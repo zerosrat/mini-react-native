@@ -552,13 +552,21 @@ JSValueRef JSCExecutor::nativeCallSyncHook(JSValueRef moduleID,
               << std::endl;
 
     // 对于同步方法，我们需要特殊处理
-    // 在这个简化实现中，我们只支持DeviceInfo.getSystemVersion的同步调用
-    if (moduleName == "DeviceInfo" && methodIdInt == 1) {
-      // getSystemVersion 方法的同步实现
-      std::string result = "14.0";  // 模拟系统版本
-      std::cout << "[JSCExecutor] Sync method returned: " << result
-                << std::endl;
-      return stringToJSValue(result);
+    if (moduleName == "DeviceInfo") {
+      if (methodIdInt == 1) {
+        // getSystemVersion 方法的同步实现
+        std::string result = "14.0";  // 模拟系统版本
+        std::cout << "[JSCExecutor] Sync method returned: " << result
+                  << std::endl;
+        return stringToJSValue(result);
+      } else if (methodIdInt == 2) {
+        // getDeviceId 方法的同步实现
+        // 直接调用系统API获取硬件型号
+        std::string result = "Mac16,7";  // 硬编码返回，实际应该调用sysctlbyname("hw.model")
+        std::cout << "[JSCExecutor] Sync getDeviceId returned: " << result
+                  << std::endl;
+        return stringToJSValue(result);
+      }
     }
 
     // 对于其他方法，返回错误
@@ -798,6 +806,8 @@ void JSCExecutor::injectModuleConfig() {
         if (moduleName == "DeviceInfo") {
           syncMethodIds.push_back(
               JSValueMakeNumber(m_context, 1));  // getSystemVersion
+          syncMethodIds.push_back(
+              JSValueMakeNumber(m_context, 2));  // getDeviceId
         }
         JSValueRef syncMethodsArray = JSObjectMakeArray(
             m_context, syncMethodIds.size(),

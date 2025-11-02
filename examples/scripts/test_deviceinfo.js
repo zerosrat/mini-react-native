@@ -11,8 +11,7 @@
  * 测试映射：
  * - JavaScript getUniqueId() → C++ methodId=0 (Promise)
  * - JavaScript getSystemVersion() → C++ methodId=1 (Sync)
- * - JavaScript getModel(callback) → C++ methodId=2 (Callback)
- * - JavaScript getSystemName(callback) → C++ methodId=3 (Callback)
+ * - JavaScript getDeviceId() → C++ methodId=2 (Sync)
  */
 
 'use strict'
@@ -59,7 +58,7 @@ console.log('✅ All dependencies loaded successfully')
 
 // 全局测试状态
 const testState = {
-  totalTests: 4,
+  totalTests: 3,
   completedTests: 0,
   passedTests: 0,
   results: {},
@@ -156,31 +155,17 @@ async function runDeviceInfoIntegrationTest() {
       recordTestResult('getSystemVersion', false, null, error.message)
     }
 
-    // 测试 3: getModel (回调方法)
-    console.log('\n3️⃣ Testing getModel(callback) → void (methodId=2)')
-    DeviceInfo.getModel((error, result) => {
-      console.log('   📤 JavaScript call initiated')
-      if (error) {
-        console.log('   ❌ Callback received error:', error)
-        recordTestResult('getModel', false, null, error)
-      } else {
-        console.log('   📥 Callback received result:', result)
-        recordTestResult('getModel', true, result)
-      }
-    })
-
-    // 测试 4: getSystemName (回调方法)
-    console.log('\n4️⃣ Testing getSystemName(callback) → void (methodId=3)')
-    DeviceInfo.getSystemName((error, result) => {
-      console.log('   📤 JavaScript call initiated')
-      if (error) {
-        console.log('   ❌ Callback received error:', error)
-        recordTestResult('getSystemName', false, null, error)
-      } else {
-        console.log('   📥 Callback received result:', result)
-        recordTestResult('getSystemName', true, result)
-      }
-    })
+    // 测试 3: getDeviceId (同步方法)
+    console.log('\n3️⃣ Testing getDeviceId() → string (methodId=2)')
+    try {
+      const deviceId = DeviceInfo.getDeviceId()
+      console.log('   📤 JavaScript call completed')
+      console.log('   📥 Sync result:', deviceId)
+      recordTestResult('getDeviceId', true, deviceId)
+    } catch (error) {
+      console.log('   ❌ Sync call failed:', error.message)
+      recordTestResult('getDeviceId', false, null, error.message)
+    }
 
     console.log('\n⏱️  Waiting for async callbacks to complete...')
   } catch (error) {

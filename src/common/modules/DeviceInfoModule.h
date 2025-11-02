@@ -16,8 +16,7 @@ namespace modules {
  * 支持的方法：
  * - getUniqueId(): 获取设备唯一标识
  * - getSystemVersion(): 获取系统版本
- * - getModel(): 获取设备型号
- * - getSystemName(): 获取系统名称
+ * - getDeviceId(): 获取设备硬件型号标识 (如 "Mac16,7")
  *
  * 常量导出：
  * - systemName: 系统名称 (macOS/iOS/Android)
@@ -75,8 +74,7 @@ private:
      */
     void handleGetUniqueId(const std::string& args, int callId);
     void handleGetSystemVersion(const std::string& args, int callId);
-    void handleGetModel(const std::string& args, int callId);
-    void handleGetSystemName(const std::string& args, int callId);
+    void handleGetDeviceId(const std::string& args, int callId);
 
     /**
      * 平台特定的设备信息获取接口
@@ -84,8 +82,7 @@ private:
      */
     std::string getUniqueIdImpl() const;
     std::string getSystemVersionImpl() const;
-    std::string getModelImpl() const;
-    std::string getSystemNameImpl() const;
+    std::string getDeviceIdImpl() const;
 
     /**
      * 工具方法

@@ -21,10 +21,9 @@ std::string DeviceInfoModule::getName() const {
 
 std::vector<std::string> DeviceInfoModule::getMethods() const {
     return {
-        "getUniqueId",
-        "getSystemVersion",
-        "getModel",
-        "getSystemName"
+        "getUniqueId",      // methodId = 0
+        "getSystemVersion", // methodId = 1
+        "getDeviceId"       // methodId = 2
     };
 }
 
@@ -32,10 +31,9 @@ std::map<std::string, std::string> DeviceInfoModule::getConstants() const {
     std::map<std::string, std::string> constants;
 
     try {
-        constants["systemName"] = getSystemNameImpl();
         constants["systemVersion"] = getSystemVersionImpl();
-        constants["model"] = getModelImpl();
         constants["uniqueId"] = getUniqueIdImpl();
+        constants["deviceId"] = getDeviceIdImpl();
     } catch (const std::exception& e) {
         std::cerr << "[DeviceInfo] Error getting constants: " << e.what() << std::endl;
     }
@@ -49,10 +47,8 @@ void DeviceInfoModule::invoke(const std::string& methodName, const std::string& 
             handleGetUniqueId(args, callId);
         } else if (methodName == "getSystemVersion") {
             handleGetSystemVersion(args, callId);
-        } else if (methodName == "getModel") {
-            handleGetModel(args, callId);
-        } else if (methodName == "getSystemName") {
-            handleGetSystemName(args, callId);
+        } else if (methodName == "getDeviceId") {
+            handleGetDeviceId(args, callId);
         } else {
             sendErrorCallback(callId, "Unknown method: " + methodName);
         }
@@ -80,21 +76,12 @@ void DeviceInfoModule::handleGetSystemVersion(const std::string& args, int callI
     }
 }
 
-void DeviceInfoModule::handleGetModel(const std::string& args, int callId) {
+void DeviceInfoModule::handleGetDeviceId(const std::string& args, int callId) {
     try {
-        std::string model = getModelImpl();
-        sendSuccessCallback(callId, model);
+        std::string deviceId = getDeviceIdImpl();
+        sendSuccessCallback(callId, deviceId);
     } catch (const std::exception& e) {
-        sendErrorCallback(callId, "Failed to get model: " + std::string(e.what()));
-    }
-}
-
-void DeviceInfoModule::handleGetSystemName(const std::string& args, int callId) {
-    try {
-        std::string systemName = getSystemNameImpl();
-        sendSuccessCallback(callId, systemName);
-    } catch (const std::exception& e) {
-        sendErrorCallback(callId, "Failed to get system name: " + std::string(e.what()));
+        sendErrorCallback(callId, "Failed to get device ID: " + std::string(e.what()));
     }
 }
 
@@ -126,7 +113,7 @@ std::string DeviceInfoModule::getUniqueIdImpl() const {
         }
 
         // 最后备选：生成基于设备信息的标识
-        return "macOS-" + getModelImpl() + "-" + getSystemVersionImpl();
+        return "macOS-" + getDeviceIdImpl() + "-" + getSystemVersionImpl();
     }
 }
 
@@ -142,7 +129,7 @@ std::string DeviceInfoModule::getSystemVersionImpl() const {
     }
 }
 
-std::string DeviceInfoModule::getModelImpl() const {
+std::string DeviceInfoModule::getDeviceIdImpl() const {
     @autoreleasepool {
         size_t size = 0;
         sysctlbyname("hw.model", nullptr, &size, nullptr, 0);
@@ -155,12 +142,8 @@ std::string DeviceInfoModule::getModelImpl() const {
         }
 
         // 备选方案
-        return "Unknown Mac";
+        return "Unknown";
     }
-}
-
-std::string DeviceInfoModule::getSystemNameImpl() const {
-    return "macOS";
 }
 
 // 工具方法实现

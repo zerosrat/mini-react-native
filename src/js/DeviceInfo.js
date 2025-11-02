@@ -83,41 +83,16 @@ const DeviceInfo = {
   },
 
   /**
-   * 获取设备型号
-   * @param {Function} callback - 回调函数，接收 (error, result) 参数
+   * 获取设备硬件型号标识
+   * @returns {string} 设备硬件型号标识 (如 "Mac16,7")
    */
-  getModel(callback) {
-    console.log('[DeviceInfo] Calling getModel (Callback method)')
-
-    if (!callback || typeof callback !== 'function') {
-      console.error('[DeviceInfo] getModel requires a callback function')
-      return
-    }
+  getDeviceId() {
+    console.log('[DeviceInfo] Calling getDeviceId (Sync method)')
 
     const native = getDeviceInfoNative()
 
-    // 由于使用了标准的 genMethod 实现，这个方法支持双回调模式
-    // 但我们的实现是单回调，所以只传成功回调
-    native.getModel(callback)
-  },
-
-  /**
-   * 获取系统名称
-   * @param {Function} callback - 回调函数，接收 (error, result) 参数
-   */
-  getSystemName(callback) {
-    console.log('[DeviceInfo] Calling getSystemName (Callback method)')
-
-    if (!callback || typeof callback !== 'function') {
-      console.error('[DeviceInfo] getSystemName requires a callback function')
-      return
-    }
-
-    const native = getDeviceInfoNative()
-
-    // 由于使用了标准的 genMethod 实现，这个方法支持双回调模式
-    // 但我们的实现是单回调，所以只传成功回调
-    native.getSystemName(callback)
+    // 由于使用了标准的 genMethod 实现，这个方法会同步返回结果
+    return native.getDeviceId()
   },
 
   // 提供直接访问原生模块的方法（用于调试）
