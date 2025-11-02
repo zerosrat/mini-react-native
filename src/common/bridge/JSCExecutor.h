@@ -166,6 +166,16 @@ class JSCExecutor {
    */
   void injectModuleConfig();
 
+  /**
+   * 处理模块调用回调
+   * 将 Native 模块的执行结果返回给 JavaScript
+   * @param callId 调用标识符
+   * @param result 执行结果（JSON格式）
+   * @param isError 是否为错误结果
+   */
+  void handleModuleCallback(int callId, const std::string &result,
+                            bool isError);
+
  private:
   /**
    * 初始化 JavaScript 执行环境
@@ -255,15 +265,6 @@ class JSCExecutor {
    */
   void processBridgeMessage(const mini_rn::bridge::BridgeMessage &message);
 
-  /**
-   * 处理模块调用回调
-   * 将 Native 模块的执行结果返回给 JavaScript
-   * @param callId 调用标识符
-   * @param result 执行结果（JSON格式）
-   * @param isError 是否为错误结果
-   */
-  void handleModuleCallback(int callId, const std::string &result,
-                            bool isError);
 };
 
 }  // namespace bridge

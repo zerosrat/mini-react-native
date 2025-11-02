@@ -655,7 +655,8 @@ void JSCExecutor::handleModuleCallback(int callId, const std::string &result,
       argsJson = "[\"" + result + "\"]";
     } else {
       // 成功情况：[null, result]
-      argsJson = "[null, \"" + result + "\"]";
+      // result 已经是 JSON 格式，不需要再加引号
+      argsJson = "[null, " + result + "]";
     }
 
     // 创建参数数组
@@ -663,15 +664,19 @@ void JSCExecutor::handleModuleCallback(int callId, const std::string &result,
     arguments[0] = JSValueMakeNumber(m_context, callId);  // callbackID
 
     // 解析 JSON 参数
+    std::cout << "[JSCExecutor] Preparing callback args JSON: " << argsJson << std::endl;
     JSStringRef argsStr = JSStringCreateWithUTF8CString(argsJson.c_str());
     JSValueRef argsValue = JSValueMakeFromJSONString(m_context, argsStr);
     JSStringRelease(argsStr);
 
     if (!argsValue) {
       // JSON 解析失败，创建简单数组
+      std::cout << "[JSCExecutor] JSON parsing failed, creating simple array" << std::endl;
       JSValueRef simpleArgs[1];
       simpleArgs[0] = stringToJSValue(result);
       argsValue = JSObjectMakeArray(m_context, 1, simpleArgs, nullptr);
+    } else {
+      std::cout << "[JSCExecutor] JSON parsing successful" << std::endl;
     }
 
     arguments[1] = argsValue;  // args

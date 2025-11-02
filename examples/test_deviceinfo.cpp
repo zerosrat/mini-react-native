@@ -124,11 +124,13 @@ void testDeviceInfoJavaScriptIntegration() {
     auto* moduleRegistry = executor.getModuleRegistry();
 
     auto deviceInfoModule = std::make_unique<DeviceInfoModule>(
-        [](int callId, const std::string& result, bool isError) {
+        [&executor](int callId, const std::string& result, bool isError) {
           std::cout << "[DeviceInfo Callback] CallId: " << callId
                     << ", Result: " << result
                     << ", IsError: " << (isError ? "true" : "false")
                     << std::endl;
+          // 调用 JSCExecutor 的回调方法，将结果返回给 JavaScript
+          executor.handleModuleCallback(callId, result, isError);
         });
 
     std::vector<std::unique_ptr<NativeModule>> modules;
