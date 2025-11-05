@@ -57,9 +57,9 @@ void testJSCExecutor() {
             console.log("Testing Bridge functions...");
 
             // 测试日志函数
-            if (typeof __nativeLoggingHook === 'function') {
-                __nativeLoggingHook('INFO', 'This is a test log from JavaScript');
-                __nativeLoggingHook('DEBUG', 'Bridge logging is working!');
+            if (typeof global.nativeLoggingHook === 'function') {
+                global.nativeLoggingHook('INFO', 'This is a test log from JavaScript');
+                global.nativeLoggingHook('DEBUG', 'Bridge logging is working!');
             }
 
             // 测试消息队列函数 (目前只是打印)

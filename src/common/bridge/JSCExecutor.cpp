@@ -187,7 +187,7 @@ void JSCExecutor::installBridgeFunctions() {
 
   // 注入日志函数
   installGlobalFunction(
-      "__nativeLoggingHook",
+      "nativeLoggingHook",
       [](JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject,
          size_t argumentCount, const JSValueRef arguments[],
          JSValueRef *exception) -> JSValueRef {
@@ -294,17 +294,6 @@ void JSCExecutor::loadApplicationScript(const std::string &script,
 void JSCExecutor::setJSExceptionHandler(
     std::function<void(const std::string &)> handler) {
   m_exceptionHandler = handler;
-}
-
-void JSCExecutor::callJSFunction(const std::string &module,
-                                 const std::string &method,
-                                 const std::string &arguments) {
-  // TODO: 待实现 JavaScript 函数调用
-  // 避免未使用参数的警告
-  (void)arguments;
-
-  std::cout << "[JSCExecutor] Calling JS function: " << module << "." << method
-            << std::endl;
 }
 
 void JSCExecutor::installGlobalFunction(
@@ -552,10 +541,12 @@ JSValueRef JSCExecutor::nativeCallSyncHook(JSValueRef moduleID,
               << std::endl;
 
     // 调用真实的模块实现（替换之前的 Mock 代码）
-    std::string result = m_moduleRegistry->callSerializableNativeHook(moduleIdInt, methodIdInt, argsJson);
+    std::string result = m_moduleRegistry->callSerializableNativeHook(
+        moduleIdInt, methodIdInt, argsJson);
 
     if (!result.empty()) {
-      std::cout << "[JSCExecutor] Sync method returned: " << result << std::endl;
+      std::cout << "[JSCExecutor] Sync method returned: " << result
+                << std::endl;
       return stringToJSValue(result);
     }
 
@@ -662,14 +653,16 @@ void JSCExecutor::handleModuleCallback(int callId, const std::string &result,
     arguments[0] = JSValueMakeNumber(m_context, callId);  // callbackID
 
     // 解析 JSON 参数
-    std::cout << "[JSCExecutor] Preparing callback args JSON: " << argsJson << std::endl;
+    std::cout << "[JSCExecutor] Preparing callback args JSON: " << argsJson
+              << std::endl;
     JSStringRef argsStr = JSStringCreateWithUTF8CString(argsJson.c_str());
     JSValueRef argsValue = JSValueMakeFromJSONString(m_context, argsStr);
     JSStringRelease(argsStr);
 
     if (!argsValue) {
       // JSON 解析失败，创建简单数组
-      std::cout << "[JSCExecutor] JSON parsing failed, creating simple array" << std::endl;
+      std::cout << "[JSCExecutor] JSON parsing failed, creating simple array"
+                << std::endl;
       JSValueRef simpleArgs[1];
       simpleArgs[0] = stringToJSValue(result);
       argsValue = JSObjectMakeArray(m_context, 1, simpleArgs, nullptr);

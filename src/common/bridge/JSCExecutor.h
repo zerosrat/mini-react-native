@@ -119,15 +119,6 @@ class JSCExecutor {
   void setJSExceptionHandler(std::function<void(const std::string &)> handler);
 
   /**
-   * 调用 JavaScript 函数
-   * @param module 模块名称
-   * @param method 方法名称
-   * @param arguments JSON 格式的参数
-   */
-  void callJSFunction(const std::string &module, const std::string &method,
-                      const std::string &arguments);
-
-  /**
    * 向 JavaScript 环境注入全局函数
    * @param name 函数名称
    * @param callback Native 回调函数
@@ -264,7 +255,6 @@ class JSCExecutor {
    * @param message 解析后的Bridge消息
    */
   void processBridgeMessage(const mini_rn::bridge::BridgeMessage &message);
-
 };
 
 }  // namespace bridge

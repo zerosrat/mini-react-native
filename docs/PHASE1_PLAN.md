@@ -57,7 +57,6 @@
   public:
       void loadApplicationScript(const std::string& script, const std::string& sourceURL);
       void setJSExceptionHandler(std::function<void(const std::string&)> handler);
-      void callJSFunction(const std::string& module, const std::string& method, const std::string& arguments);
       void installGlobalFunction(const std::string& name, JSObjectCallAsFunctionCallback callback);
       void destroy();
   };
@@ -76,8 +75,7 @@
 
 - [x] **RN Bridge 关键函数注入**
   - 实现 `nativeFlushQueueImmediate(moduleIds, methodIds, params, callbacks)`
-  - 实现 `__nativeCallSyncHook(moduleId, methodId, args)`
-  - 实现 `__nativeLoggingHook(level, message)`
+  - 实现 `nativeLoggingHook(level, message)`
   - 确保函数签名与 RN 完全一致
 
 - [x] **RN 风格异常处理**
