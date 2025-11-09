@@ -6,6 +6,11 @@ BasedOnStyle: Google
 # 调整预处理器缩进
 IndentPPDirectives: BeforeHash
 
-# 只做最小调整
+# C++ 配置
+---
 Language: Cpp
 Standard: c++17
+
+# Objective-C/Objective-C++ 配置
+---
+Language: ObjC
