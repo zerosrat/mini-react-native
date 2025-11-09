@@ -101,10 +101,10 @@
   class MessageQueue {
     constructor()                    // 初始化队列和回调表
     registerLazyCallableModule(name, factory) // 注册延迟加载模块
-    enqueueNativeCall(moduleID, methodID, params, onFail, onSucc) // JavaScript → Native 调用
-    callFunctionReturnFlushedQueue(module, method, args)       // Native → JavaScript 调用: 执行 JS 模块中的方法
-    invokeCallbackAndReturnFlushedQueue(cbID, args) // Native → JavaScript 调用: 执行回调并返回队列
     flushedQueue()                  // 获取并清空待处理队列
+    enqueueNativeCall(moduleID, methodID, params, onFail, onSucc) // JavaScript → Native 调用
+    callFunctionReturnFlushedQueue(module, method, args)       // Native → JavaScript 调用，场景为模块的事件通知
+    invokeCallbackAndReturnFlushedQueue(cbID, args) // Native → JavaScript 调用，场景为模块的异步回调
     getEventLoopRunningTime()       // 获取事件循环运行时间
   }
   ```

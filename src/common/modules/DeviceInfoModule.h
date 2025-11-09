@@ -1,8 +1,9 @@
 #ifndef DEVICEINFOMODULE_H
 #define DEVICEINFOMODULE_H
 
-#include "NativeModule.h"
 #include <functional>
+
+#include "NativeModule.h"
 
 namespace mini_rn {
 namespace modules {
@@ -37,65 +38,58 @@ namespace modules {
  * ```
  */
 class DeviceInfoModule : public NativeModule {
-public:
-    /**
-     * 回调处理器类型定义
-     * 用于处理异步方法的结果回调
-     */
-    using CallbackHandler = std::function<void(int callId, const std::string& result, bool isError)>;
+ public:
+  /**
+   * 回调处理器类型定义
+   * 用于处理异步方法的结果回调
+   */
+  using CallbackHandler =
+      std::function<void(int callId, const std::string& result, bool isError)>;
 
-    /**
-     * 构造函数
-     * @param callbackHandler 回调处理器，用于返回结果到 JavaScript
-     */
-    explicit DeviceInfoModule(CallbackHandler callbackHandler);
+  /**
+   * 构造函数
+   * @param callbackHandler 回调处理器，用于返回结果到 JavaScript
+   */
+  explicit DeviceInfoModule(CallbackHandler callbackHandler);
 
-    /**
-     * 析构函数
-     */
-    ~DeviceInfoModule() override = default;
+  /**
+   * 析构函数
+   */
+  ~DeviceInfoModule() override = default;
 
-    // NativeModule 接口实现
-    std::string getName() const override;
-    std::vector<std::string> getMethods() const override;
-    std::map<std::string, std::string> getConstants() const override;
-    void invoke(const std::string& methodName, const std::string& args, int callId) override;
+  // NativeModule 接口实现
+  std::string getName() const override;
+  std::vector<std::string> getMethods() const override;
+  //   std::map<std::string, std::string> getConstants() const override;
+  void invoke(const std::string& methodName, const std::string& args,
+              int callId) override;
 
-    /**
-     * 平台特定的设备信息获取接口（同步调用）
-     * 这些方法由平台特定的实现文件提供 (如 DeviceInfoModule.mm)
-     * 公开这些方法以支持同步调用
-     */
-    std::string getUniqueIdImpl() const;
-    std::string getSystemVersionImpl() const;
-    std::string getDeviceIdImpl() const;
+  /**
+   * 平台特定的设备信息获取接口
+   * 这些方法由平台特定的实现文件提供 (如 DeviceInfoModule.mm)
+   * 公开这些方法以支持调用
+   */
+  std::string getUniqueIdImpl() const;
+  std::string getSystemVersionImpl() const;
+  std::string getDeviceIdImpl() const;
 
-private:
-    /**
-     * 回调处理器
-     * 用于将异步方法的结果返回给 JavaScript
-     */
-    CallbackHandler m_callbackHandler;
+ private:
+  /**
+   * 回调处理器
+   * 用于将异步方法的结果返回给 JavaScript
+   */
+  CallbackHandler m_callbackHandler;
 
-    /**
-     * 设备信息方法实现
-     * 这些方法由平台特定的实现提供
-     */
-    void handleGetUniqueId(const std::string& args, int callId);
-    void handleGetSystemVersion(const std::string& args, int callId);
-    void handleGetDeviceId(const std::string& args, int callId);
-
-
-    /**
-     * 工具方法
-     */
-    void sendSuccessCallback(int callId, const std::string& result);
-    void sendErrorCallback(int callId, const std::string& error);
-    std::string createSuccessResponse(const std::string& data) const;
-    std::string createErrorResponse(const std::string& error) const;
+  /**
+   * 工具方法
+   */
+  void sendSuccessCallback(int callId, const std::string& result);
+  void sendErrorCallback(int callId, const std::string& error);
+  std::string createSuccessResponse(const std::string& data) const;
+  std::string createErrorResponse(const std::string& error) const;
 };
 
-} // namespace modules
-} // namespace mini_rn
+}  // namespace modules
+}  // namespace mini_rn
 
-#endif // DEVICEINFOMODULE_H
+#endif  // DEVICEINFOMODULE_H

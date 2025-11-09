@@ -27,61 +27,16 @@ std::vector<std::string> DeviceInfoModule::getMethods() const {
     };
 }
 
-std::map<std::string, std::string> DeviceInfoModule::getConstants() const {
-    std::map<std::string, std::string> constants;
-
-    try {
-        constants["systemVersion"] = getSystemVersionImpl();
-        constants["uniqueId"] = getUniqueIdImpl();
-        constants["deviceId"] = getDeviceIdImpl();
-    } catch (const std::exception& e) {
-        std::cerr << "[DeviceInfo] Error getting constants: " << e.what() << std::endl;
-    }
-
-    return constants;
-}
-
 void DeviceInfoModule::invoke(const std::string& methodName, const std::string& args, int callId) {
     try {
         if (methodName == "getUniqueId") {
-            handleGetUniqueId(args, callId);
-        } else if (methodName == "getSystemVersion") {
-            handleGetSystemVersion(args, callId);
-        } else if (methodName == "getDeviceId") {
-            handleGetDeviceId(args, callId);
+            std::string uniqueId = getUniqueIdImpl();
+            sendSuccessCallback(callId, uniqueId);
         } else {
             sendErrorCallback(callId, "Unknown method: " + methodName);
         }
     } catch (const std::exception& e) {
         sendErrorCallback(callId, "Method invocation failed: " + std::string(e.what()));
-    }
-}
-
-// 方法处理实现
-void DeviceInfoModule::handleGetUniqueId(const std::string& args, int callId) {
-    try {
-        std::string uniqueId = getUniqueIdImpl();
-        sendSuccessCallback(callId, uniqueId);
-    } catch (const std::exception& e) {
-        sendErrorCallback(callId, "Failed to get unique ID: " + std::string(e.what()));
-    }
-}
-
-void DeviceInfoModule::handleGetSystemVersion(const std::string& args, int callId) {
-    try {
-        std::string systemVersion = getSystemVersionImpl();
-        sendSuccessCallback(callId, systemVersion);
-    } catch (const std::exception& e) {
-        sendErrorCallback(callId, "Failed to get system version: " + std::string(e.what()));
-    }
-}
-
-void DeviceInfoModule::handleGetDeviceId(const std::string& args, int callId) {
-    try {
-        std::string deviceId = getDeviceIdImpl();
-        sendSuccessCallback(callId, deviceId);
-    } catch (const std::exception& e) {
-        sendErrorCallback(callId, "Failed to get device ID: " + std::string(e.what()));
     }
 }
 
