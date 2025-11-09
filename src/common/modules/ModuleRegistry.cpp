@@ -121,14 +121,16 @@ void ModuleRegistry::callNativeMethod(unsigned int moduleId,
 
 bool ModuleRegistry::setCallbackHandler(CallbackHandler handler) {
   if (callbackHandlerSet_) {
-    std::cout << "[ModuleRegistry] Warning: Callback handler already set, ignoring duplicate call"
+    std::cout << "[ModuleRegistry] Warning: Callback handler already set, "
+                 "ignoring duplicate call"
               << std::endl;
     return false;
   }
 
   callbackHandler_ = std::move(handler);
   callbackHandlerSet_ = true;
-  std::cout << "[ModuleRegistry] Callback handler set successfully" << std::endl;
+  std::cout << "[ModuleRegistry] Callback handler set successfully"
+            << std::endl;
   return true;
 }
 
@@ -261,6 +263,102 @@ void ModuleRegistry::sendSuccessCallback(int callId,
     std::cout << "[ModuleRegistry] Warning: No callback handler set, cannot "
                  "send result: "
               << result << std::endl;
+  }
+}
+
+ModuleConfig ModuleRegistry::getConfig(const std::string& name,
+                                       JSContextRef context) {
+  std::cout << "[ModuleRegistry] Getting config for module: " << name
+            << std::endl;
+
+  // 查找模块
+  auto it = modulesByName_.find(name);
+  if (it == modulesByName_.end()) {
+    std::cout << "[ModuleRegistry] Module '" << name << "' not found"
+              << std::endl;
+    return {SIZE_MAX, nullptr};
+  }
+
+  size_t moduleIndex = it->second;
+  NativeModule* module = modules_[moduleIndex].get();
+
+  if (!module) {
+    std::cout << "[ModuleRegistry] Module at index " << moduleIndex
+              << " is null" << std::endl;
+    return {SIZE_MAX, nullptr};
+  }
+
+  try {
+    // 创建模块配置数组：[moduleName, constants, methods, promiseMethods,
+    // syncMethods]
+    std::vector<JSValueRef> moduleConfigElements;
+    moduleConfigElements.reserve(5);
+
+    // 1. 模块名称
+    JSStringRef moduleNameStr = JSStringCreateWithUTF8CString(name.c_str());
+    moduleConfigElements.push_back(JSValueMakeString(context, moduleNameStr));
+    JSStringRelease(moduleNameStr);
+
+    // 2. 常量 (目前设为 null)
+    moduleConfigElements.push_back(JSValueMakeNull(context));
+
+    // 3. 方法名数组
+    auto methodNames = module->getMethods();
+    std::vector<JSValueRef> methodNameValues;
+    methodNameValues.reserve(methodNames.size());
+
+    for (const auto& methodName : methodNames) {
+      JSStringRef methodNameStr =
+          JSStringCreateWithUTF8CString(methodName.c_str());
+      methodNameValues.push_back(JSValueMakeString(context, methodNameStr));
+      JSStringRelease(methodNameStr);
+    }
+
+    JSValueRef methodsArray = JSObjectMakeArray(
+        context, methodNameValues.size(),
+        methodNameValues.empty() ? nullptr : methodNameValues.data(), nullptr);
+    moduleConfigElements.push_back(methodsArray);
+
+    // 4. Promise 方法ID数组 (硬编码 DeviceInfo 模块)
+    std::vector<JSValueRef> promiseMethodIds;
+    if (name == "DeviceInfo") {
+      promiseMethodIds.push_back(JSValueMakeNumber(context, 0));  // getUniqueId
+    }
+    JSValueRef promiseMethodsArray = JSObjectMakeArray(
+        context, promiseMethodIds.size(),
+        promiseMethodIds.empty() ? nullptr : promiseMethodIds.data(), nullptr);
+    moduleConfigElements.push_back(promiseMethodsArray);
+
+    // 5. 同步方法ID数组 (硬编码 DeviceInfo 模块)
+    std::vector<JSValueRef> syncMethodIds;
+    if (name == "DeviceInfo") {
+      syncMethodIds.push_back(
+          JSValueMakeNumber(context, 1));  // getSystemVersion
+      syncMethodIds.push_back(JSValueMakeNumber(context, 2));  // getDeviceId
+    }
+    JSValueRef syncMethodsArray = JSObjectMakeArray(
+        context, syncMethodIds.size(),
+        syncMethodIds.empty() ? nullptr : syncMethodIds.data(), nullptr);
+    moduleConfigElements.push_back(syncMethodsArray);
+
+    // 创建模块配置数组
+    JSValueRef moduleConfigArray =
+        JSObjectMakeArray(context, moduleConfigElements.size(),
+                          moduleConfigElements.data(), nullptr);
+
+    std::cout << "[ModuleRegistry] Created config for module: " << name
+              << " with " << methodNames.size() << " methods" << std::endl;
+
+    return {moduleIndex, moduleConfigArray};
+
+  } catch (const std::exception& e) {
+    std::cout << "[ModuleRegistry] Error creating config for module '" << name
+              << "': " << e.what() << std::endl;
+    return {SIZE_MAX, nullptr};
+  } catch (...) {
+    std::cout << "[ModuleRegistry] Unknown error creating config for module '"
+              << name << "'" << std::endl;
+    return {SIZE_MAX, nullptr};
   }
 }
 

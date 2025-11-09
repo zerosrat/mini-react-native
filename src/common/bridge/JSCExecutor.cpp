@@ -715,115 +715,42 @@ void JSCExecutor::injectModuleConfig() {
     }
 
     // 创建 __fbBatchedBridgeConfig 对象
-    // 格式：{ remoteModuleConfig: [[moduleName, constants, methods,
-    // promiseMethods, syncMethods], ...] }
-
     JSObjectRef bridgeConfig = JSObjectMake(m_context, nullptr, nullptr);
 
-    // 创建 remoteModuleConfig 数组
+    // 获取所有模块名称
     auto moduleNames = m_moduleRegistry->moduleNames();
-    size_t moduleCount = moduleNames.size();
 
-    if (moduleCount == 0) {
-      std::cout << "[JSCExecutor] No modules registered, creating empty config"
-                << std::endl;
+    // 使用 ModuleRegistry::getConfig 获取每个模块的配置
+    std::vector<JSValueRef> moduleConfigs;
+    moduleConfigs.reserve(moduleNames.size());
 
-      // 创建空的 remoteModuleConfig 数组
-      JSValueRef emptyArray = JSObjectMakeArray(m_context, 0, nullptr, nullptr);
+    for (const auto &moduleName : moduleNames) {
+      // 调用新的 getConfig 接口
+      mini_rn::modules::ModuleConfig config =
+          m_moduleRegistry->getConfig(moduleName, m_context);
 
-      // 设置 remoteModuleConfig 属性
-      JSStringRef remoteModuleConfigKey =
-          JSStringCreateWithUTF8CString("remoteModuleConfig");
-      JSObjectSetProperty(m_context, bridgeConfig, remoteModuleConfigKey,
-                          emptyArray, kJSPropertyAttributeNone, nullptr);
-      JSStringRelease(remoteModuleConfigKey);
-    } else {
-      // 创建模块配置数组
-      std::vector<JSValueRef> moduleConfigs;
-      moduleConfigs.reserve(moduleCount);
-
-      for (size_t moduleId = 0; moduleId < moduleCount; moduleId++) {
-        const std::string &moduleName = moduleNames[moduleId];
-        auto methodNames = m_moduleRegistry->getMethodNames(moduleId);
-
-        // 创建单个模块配置数组：[moduleName, constants, methods,
-        // promiseMethods, syncMethods]
-        std::vector<JSValueRef> moduleConfigElements;
-        moduleConfigElements.reserve(5);
-
-        // 1. 模块名称
-        JSStringRef moduleNameStr =
-            JSStringCreateWithUTF8CString(moduleName.c_str());
-        moduleConfigElements.push_back(
-            JSValueMakeString(m_context, moduleNameStr));
-        JSStringRelease(moduleNameStr);
-
-        // 2. 常量 (目前设为 null)
-        moduleConfigElements.push_back(JSValueMakeNull(m_context));
-
-        // 3. 方法名数组
-        std::vector<JSValueRef> methodNameValues;
-        methodNameValues.reserve(methodNames.size());
-        for (const auto &methodName : methodNames) {
-          JSStringRef methodNameStr =
-              JSStringCreateWithUTF8CString(methodName.c_str());
-          methodNameValues.push_back(
-              JSValueMakeString(m_context, methodNameStr));
-          JSStringRelease(methodNameStr);
-        }
-        JSValueRef methodsArray = JSObjectMakeArray(
-            m_context, methodNameValues.size(),
-            methodNameValues.empty() ? nullptr : methodNameValues.data(),
-            nullptr);
-        moduleConfigElements.push_back(methodsArray);
-
-        // 4. Promise 方法ID数组
-        std::vector<JSValueRef> promiseMethodIds;
-        if (moduleName == "DeviceInfo") {
-          promiseMethodIds.push_back(
-              JSValueMakeNumber(m_context, 0));  // getUniqueId
-        }
-        JSValueRef promiseMethodsArray = JSObjectMakeArray(
-            m_context, promiseMethodIds.size(),
-            promiseMethodIds.empty() ? nullptr : promiseMethodIds.data(),
-            nullptr);
-        moduleConfigElements.push_back(promiseMethodsArray);
-
-        // 5. 同步方法ID数组
-        std::vector<JSValueRef> syncMethodIds;
-        if (moduleName == "DeviceInfo") {
-          syncMethodIds.push_back(
-              JSValueMakeNumber(m_context, 1));  // getSystemVersion
-          syncMethodIds.push_back(
-              JSValueMakeNumber(m_context, 2));  // getDeviceId
-        }
-        JSValueRef syncMethodsArray = JSObjectMakeArray(
-            m_context, syncMethodIds.size(),
-            syncMethodIds.empty() ? nullptr : syncMethodIds.data(), nullptr);
-        moduleConfigElements.push_back(syncMethodsArray);
-
-        // 创建模块配置数组
-        JSValueRef moduleConfigArray =
-            JSObjectMakeArray(m_context, moduleConfigElements.size(),
-                              moduleConfigElements.data(), nullptr);
-        moduleConfigs.push_back(moduleConfigArray);
-
-        std::cout << "[JSCExecutor] Created config for module: " << moduleName
-                  << " with " << methodNames.size() << " methods" << std::endl;
+      if (config.index != SIZE_MAX && config.config != nullptr) {
+        moduleConfigs.push_back(config.config);
+        std::cout << "[JSCExecutor] Added config for module: " << moduleName
+                  << std::endl;
+      } else {
+        std::cout << "[JSCExecutor] Warning: Failed to get config for module: "
+                  << moduleName << std::endl;
       }
-
-      // 创建 remoteModuleConfig 数组
-      JSValueRef remoteModuleConfigArray = JSObjectMakeArray(
-          m_context, moduleConfigs.size(), moduleConfigs.data(), nullptr);
-
-      // 设置 remoteModuleConfig 属性
-      JSStringRef remoteModuleConfigKey =
-          JSStringCreateWithUTF8CString("remoteModuleConfig");
-      JSObjectSetProperty(m_context, bridgeConfig, remoteModuleConfigKey,
-                          remoteModuleConfigArray, kJSPropertyAttributeNone,
-                          nullptr);
-      JSStringRelease(remoteModuleConfigKey);
     }
+
+    // 创建 remoteModuleConfig 数组
+    JSValueRef remoteModuleConfigArray = JSObjectMakeArray(
+        m_context, moduleConfigs.size(),
+        moduleConfigs.empty() ? nullptr : moduleConfigs.data(), nullptr);
+
+    // 设置 remoteModuleConfig 属性
+    JSStringRef remoteModuleConfigKey =
+        JSStringCreateWithUTF8CString("remoteModuleConfig");
+    JSObjectSetProperty(m_context, bridgeConfig, remoteModuleConfigKey,
+                        remoteModuleConfigArray, kJSPropertyAttributeNone,
+                        nullptr);
+    JSStringRelease(remoteModuleConfigKey);
 
     // 将 bridgeConfig 设置为 global.__fbBatchedBridgeConfig
     JSStringRef bridgeConfigKey =
@@ -833,7 +760,7 @@ void JSCExecutor::injectModuleConfig() {
     JSStringRelease(bridgeConfigKey);
 
     std::cout << "[JSCExecutor] Module configuration injected successfully "
-                 "using native objects"
+                 "using ModuleRegistry::getConfig"
               << std::endl;
 
   } catch (const std::exception &e) {
@@ -848,12 +775,14 @@ void JSCExecutor::refreshModuleConfig() {
   // 简单实现：重新注入模块配置
   injectModuleConfig();
 
-  std::cout << "[JSCExecutor] Module configuration refreshed successfully" << std::endl;
+  std::cout << "[JSCExecutor] Module configuration refreshed successfully"
+            << std::endl;
 }
 
-
-void JSCExecutor::registerModules(std::vector<std::unique_ptr<mini_rn::modules::NativeModule>> modules) {
-  std::cout << "[JSCExecutor] Registering " << modules.size() << " module(s)..." << std::endl;
+void JSCExecutor::registerModules(
+    std::vector<std::unique_ptr<mini_rn::modules::NativeModule>> modules) {
+  std::cout << "[JSCExecutor] Registering " << modules.size() << " module(s)..."
+            << std::endl;
 
   if (!m_moduleRegistry) {
     throw std::runtime_error("ModuleRegistry not initialized");
@@ -865,7 +794,8 @@ void JSCExecutor::registerModules(std::vector<std::unique_ptr<mini_rn::modules::
   // 自动注入模块配置
   injectModuleConfig();
 
-  std::cout << "[JSCExecutor] All modules registered and config injected" << std::endl;
+  std::cout << "[JSCExecutor] All modules registered and config injected"
+            << std::endl;
 }
 
 }  // namespace bridge

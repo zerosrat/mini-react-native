@@ -7,10 +7,21 @@
 #include <unordered_map>
 #include <vector>
 
+#include <JavaScriptCore/JavaScriptCore.h>
+
 #include "NativeModule.h"
 
 namespace mini_rn {
 namespace modules {
+
+/**
+ * 模块配置结构
+ * 基于 React Native ModuleConfig 设计，用于返回模块的配置信息
+ */
+struct ModuleConfig {
+  size_t index;        // 模块索引（在 modules_ 数组中的位置）
+  JSValueRef config;   // 模块配置的 JSValue，格式为 [moduleName, constants, methods, promiseMethods, syncMethods]
+};
 
 /**
  * ModuleRegistry - React Native 兼容的模块注册器
@@ -162,6 +173,19 @@ class ModuleRegistry {
    * @param error 错误信息
    */
   void sendErrorCallback(int callId, const std::string& error);
+
+  /**
+   * 获取模块配置
+   * 基于 React Native ModuleRegistry::getConfig API
+   *
+   * 返回指定模块的配置信息，包括模块索引和 JSValue 格式的配置数据。
+   * 配置数据格式为：[moduleName, constants, methods, promiseMethods, syncMethods]
+   *
+   * @param name 模块名称
+   * @param context JavaScript 上下文，用于创建 JSValue
+   * @return ModuleConfig 结构，如果模块不存在则 index 为 SIZE_MAX，config 为 nullptr
+   */
+  ModuleConfig getConfig(const std::string& name, JSContextRef context);
 
  private:
   /**
