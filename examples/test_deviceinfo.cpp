@@ -111,21 +111,12 @@ void testDeviceInfoJavaScriptIntegration() {
       std::cout << "[JS Exception] " << error << std::endl;
     });
 
-    // 获取 ModuleRegistry 并注册 DeviceInfo 模块
-    auto* moduleRegistry = executor.getModuleRegistry();
-
-    // 创建 DeviceInfo 模块（回调功能现在通过 ModuleRegistry 自动处理）
-    auto deviceInfoModule = std::make_unique<DeviceInfoModule>();
-
-    std::vector<std::unique_ptr<NativeModule>> modules;
-    modules.push_back(std::move(deviceInfoModule));
-    moduleRegistry->registerModules(std::move(modules));
-
-    // 注入模块配置到 JavaScript 环境
-    std::cout << "\n   ✓ Injecting module configuration into JavaScript "
-                 "environment..."
+    // 注册 DeviceInfo 模块（自动注入配置）
+    std::cout << "\n   ✓ Registering DeviceInfo module and injecting configuration..."
               << std::endl;
-    executor.injectModuleConfig();
+    std::vector<std::unique_ptr<mini_rn::modules::NativeModule>> modules;
+    modules.push_back(std::make_unique<DeviceInfoModule>());
+    executor.registerModules(std::move(modules));
 
     // 按顺序加载 JavaScript 模块文件
     std::cout << "\n4. Loading JavaScript modules sequentially..." << std::endl;

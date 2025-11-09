@@ -152,6 +152,12 @@ class JSCExecutor {
   void refreshModuleConfig();
 
   /**
+   * 注册模块并自动注入配置
+   * @param modules 要注册的模块列表
+   */
+  void registerModules(std::vector<std::unique_ptr<mini_rn::modules::NativeModule>> modules);
+
+  /**
    * 注入模块配置到 JavaScript 环境
    * 创建 __fbBatchedBridgeConfig 全局对象，包含所有已注册模块的配置信息
    */
@@ -243,7 +249,6 @@ class JSCExecutor {
    */
   static JSCExecutor *getCurrentInstance();
 
- private:
   /**
    * 静态实例指针（简化的实例管理）
    */

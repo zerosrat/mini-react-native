@@ -842,5 +842,31 @@ void JSCExecutor::injectModuleConfig() {
   }
 }
 
+void JSCExecutor::refreshModuleConfig() {
+  std::cout << "[JSCExecutor] Refreshing module configuration..." << std::endl;
+
+  // 简单实现：重新注入模块配置
+  injectModuleConfig();
+
+  std::cout << "[JSCExecutor] Module configuration refreshed successfully" << std::endl;
+}
+
+
+void JSCExecutor::registerModules(std::vector<std::unique_ptr<mini_rn::modules::NativeModule>> modules) {
+  std::cout << "[JSCExecutor] Registering " << modules.size() << " module(s)..." << std::endl;
+
+  if (!m_moduleRegistry) {
+    throw std::runtime_error("ModuleRegistry not initialized");
+  }
+
+  // 注册模块
+  m_moduleRegistry->registerModules(std::move(modules));
+
+  // 自动注入模块配置
+  injectModuleConfig();
+
+  std::cout << "[JSCExecutor] All modules registered and config injected" << std::endl;
+}
+
 }  // namespace bridge
 }  // namespace mini_rn
