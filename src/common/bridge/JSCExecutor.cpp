@@ -36,10 +36,15 @@ JSCExecutor::JSCExecutor() : m_context(nullptr), m_globalObject(nullptr) {
   m_moduleRegistry = std::make_unique<mini_rn::modules::ModuleRegistry>();
 
   // 设置模块回调处理器
-  m_moduleRegistry->setCallbackHandler(
+  bool callbackSet = m_moduleRegistry->setCallbackHandler(
       [this](int callId, const std::string &result, bool isError) {
-        this->handleModuleCallback(callId, result, isError);
+        this->invokeCallback(callId, result, isError);
       });
+
+  if (!callbackSet) {
+    throw std::runtime_error(
+        "Failed to set callback handler in ModuleRegistry");
+  }
 
   initializeJSContext();
 }
@@ -598,8 +603,8 @@ void JSCExecutor::processBridgeMessage(
   std::cout << "[JSCExecutor] Bridge message processing completed" << std::endl;
 }
 
-void JSCExecutor::handleModuleCallback(int callId, const std::string &result,
-                                       bool isError) {
+void JSCExecutor::invokeCallback(int callId, const std::string &result,
+                                 bool isError) {
   std::cout << "[JSCExecutor] Handling module callback - CallId: " << callId
             << ", IsError: " << (isError ? "true" : "false")
             << ", Result: " << result << std::endl;

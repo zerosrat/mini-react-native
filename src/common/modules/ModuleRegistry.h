@@ -88,10 +88,12 @@ class ModuleRegistry {
   /**
    * 设置回调处理器
    * 设置用于将 Native 方法执行结果返回给 JavaScript 的回调函数
+   * 注意：回调处理器只能设置一次，重复设置会被忽略以防止意外覆盖
    *
    * @param handler 回调处理器函数
+   * @return 如果成功设置返回 true，如果已经设置过则返回 false
    */
-  void setCallbackHandler(CallbackHandler handler);
+  bool setCallbackHandler(CallbackHandler handler);
 
   /**
    * 获取模块数量
@@ -143,6 +145,24 @@ class ModuleRegistry {
                                          unsigned int methodId,
                                          const std::string& params);
 
+  /**
+   * 发送成功回调
+   * 供 NativeModule 调用，将成功结果返回给 JavaScript
+   *
+   * @param callId 调用标识符
+   * @param result 执行结果
+   */
+  void sendSuccessCallback(int callId, const std::string& result);
+
+  /**
+   * 发送错误回调
+   * 供 NativeModule 调用，将错误信息返回给 JavaScript
+   *
+   * @param callId 调用标识符
+   * @param error 错误信息
+   */
+  void sendErrorCallback(int callId, const std::string& error);
+
  private:
   /**
    * 模块存储
@@ -164,6 +184,12 @@ class ModuleRegistry {
   CallbackHandler callbackHandler_;
 
   /**
+   * 回调处理器是否已设置的标志
+   * 防止意外覆盖回调处理器
+   */
+  bool callbackHandlerSet_ = false;
+
+  /**
    * 更新模块名称映射
    * 基于 React Native ModuleRegistry::updateModuleNamesFromIndex 的设计
    *
@@ -178,20 +204,6 @@ class ModuleRegistry {
    * @return 如果有效返回 true，否则返回 false
    */
   bool validateIds(unsigned int moduleId, unsigned int methodId) const;
-
-  /**
-   * 发送错误回调
-   * @param callId 调用标识符
-   * @param error 错误信息
-   */
-  void sendErrorCallback(int callId, const std::string& error);
-
-  /**
-   * 发送成功回调
-   * @param callId 调用标识符
-   * @param result 执行结果
-   */
-  void sendSuccessCallback(int callId, const std::string& result);
 };
 
 }  // namespace modules

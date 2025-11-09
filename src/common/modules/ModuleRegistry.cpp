@@ -11,6 +11,13 @@ namespace modules {
 ModuleRegistry::ModuleRegistry(
     std::vector<std::unique_ptr<NativeModule>> modules)
     : modules_(std::move(modules)) {
+  // 为所有初始模块设置 ModuleRegistry 引用
+  for (auto& module : modules_) {
+    if (module) {
+      module->setModuleRegistry(this);
+    }
+  }
+
   // 初始化模块名称映射
   updateModuleNamesFromIndex(0);
 
@@ -37,6 +44,9 @@ void ModuleRegistry::registerModules(
                   << "' already exists, skipping registration" << std::endl;
         continue;
       }
+
+      // 设置模块的 ModuleRegistry 引用
+      module->setModuleRegistry(this);
 
       modules_.push_back(std::move(module));
     }
@@ -109,9 +119,17 @@ void ModuleRegistry::callNativeMethod(unsigned int moduleId,
   }
 }
 
-void ModuleRegistry::setCallbackHandler(CallbackHandler handler) {
+bool ModuleRegistry::setCallbackHandler(CallbackHandler handler) {
+  if (callbackHandlerSet_) {
+    std::cout << "[ModuleRegistry] Warning: Callback handler already set, ignoring duplicate call"
+              << std::endl;
+    return false;
+  }
+
   callbackHandler_ = std::move(handler);
-  std::cout << "[ModuleRegistry] Callback handler set" << std::endl;
+  callbackHandlerSet_ = true;
+  std::cout << "[ModuleRegistry] Callback handler set successfully" << std::endl;
+  return true;
 }
 
 bool ModuleRegistry::hasModule(unsigned int moduleId) const {

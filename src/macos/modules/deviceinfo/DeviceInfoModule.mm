@@ -10,8 +10,7 @@ namespace mini_rn {
 namespace modules {
 
 // 构造函数
-DeviceInfoModule::DeviceInfoModule(CallbackHandler callbackHandler)
-    : m_callbackHandler(std::move(callbackHandler)) {
+DeviceInfoModule::DeviceInfoModule() {
 }
 
 // NativeModule 接口实现
@@ -101,20 +100,7 @@ std::string DeviceInfoModule::getDeviceIdImpl() const {
     }
 }
 
-// 工具方法实现
-void DeviceInfoModule::sendSuccessCallback(int callId, const std::string& result) {
-    if (m_callbackHandler) {
-        std::string response = createSuccessResponse(result);
-        m_callbackHandler(callId, response, false);
-    }
-}
-
-void DeviceInfoModule::sendErrorCallback(int callId, const std::string& error) {
-    if (m_callbackHandler) {
-        std::string response = createErrorResponse(error);
-        m_callbackHandler(callId, response, true);
-    }
-}
+// 工具方法实现 - sendSuccessCallback 和 sendErrorCallback 现在由基类提供
 
 std::string DeviceInfoModule::createSuccessResponse(const std::string& data) const {
     // React Native 回调约定：直接返回数据，不需要包装对象

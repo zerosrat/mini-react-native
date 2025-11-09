@@ -55,14 +55,8 @@ void testDeviceInfoIntegration() {
     // 获取 ModuleRegistry
     auto* moduleRegistry = executor.getModuleRegistry();
 
-    // 创建 DeviceInfo 模块
-    auto deviceInfoModule = std::make_unique<DeviceInfoModule>(
-        [](int callId, const std::string& result, bool isError) {
-          // 回调处理器：将结果返回给 JavaScript
-          std::cout << "[Callback] CallId: " << callId << ", Result: " << result
-                    << ", IsError: " << (isError ? "true" : "false")
-                    << std::endl;
-        });
+    // 创建 DeviceInfo 模块（回调功能现在自动处理）
+    auto deviceInfoModule = std::make_unique<DeviceInfoModule>();
 
     // 注册 DeviceInfo 模块
     std::vector<std::unique_ptr<NativeModule>> modules;
@@ -120,15 +114,8 @@ void testDeviceInfoJavaScriptIntegration() {
     // 获取 ModuleRegistry 并注册 DeviceInfo 模块
     auto* moduleRegistry = executor.getModuleRegistry();
 
-    auto deviceInfoModule = std::make_unique<DeviceInfoModule>(
-        [&executor](int callId, const std::string& result, bool isError) {
-          std::cout << "[DeviceInfo Callback] CallId: " << callId
-                    << ", Result: " << result
-                    << ", IsError: " << (isError ? "true" : "false")
-                    << std::endl;
-          // 调用 JSCExecutor 的回调方法，将结果返回给 JavaScript
-          executor.handleModuleCallback(callId, result, isError);
-        });
+    // 创建 DeviceInfo 模块（回调功能现在通过 ModuleRegistry 自动处理）
+    auto deviceInfoModule = std::make_unique<DeviceInfoModule>();
 
     std::vector<std::unique_ptr<NativeModule>> modules;
     modules.push_back(std::move(deviceInfoModule));

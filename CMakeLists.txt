@@ -25,6 +25,7 @@ include_directories(src)
 set(COMMON_SOURCES
     src/common/bridge/JSCExecutor.cpp
     src/common/modules/ModuleRegistry.cpp
+    src/common/modules/NativeModule.cpp
     src/common/utils/JSONParser.cpp
 )
 

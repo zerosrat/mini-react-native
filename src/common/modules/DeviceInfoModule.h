@@ -40,17 +40,10 @@ namespace modules {
 class DeviceInfoModule : public NativeModule {
  public:
   /**
-   * 回调处理器类型定义
-   * 用于处理异步方法的结果回调
-   */
-  using CallbackHandler =
-      std::function<void(int callId, const std::string& result, bool isError)>;
-
-  /**
    * 构造函数
-   * @param callbackHandler 回调处理器，用于返回结果到 JavaScript
+   * 回调功能通过基类的 ModuleRegistry 引用自动处理
    */
-  explicit DeviceInfoModule(CallbackHandler callbackHandler);
+  DeviceInfoModule();
 
   /**
    * 析构函数
@@ -75,16 +68,8 @@ class DeviceInfoModule : public NativeModule {
 
  private:
   /**
-   * 回调处理器
-   * 用于将异步方法的结果返回给 JavaScript
-   */
-  CallbackHandler m_callbackHandler;
-
-  /**
    * 工具方法
    */
-  void sendSuccessCallback(int callId, const std::string& result);
-  void sendErrorCallback(int callId, const std::string& error);
   std::string createSuccessResponse(const std::string& data) const;
   std::string createErrorResponse(const std::string& error) const;
 };

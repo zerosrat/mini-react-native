@@ -164,8 +164,7 @@ class JSCExecutor {
    * @param result 执行结果（JSON格式）
    * @param isError 是否为错误结果
    */
-  void handleModuleCallback(int callId, const std::string &result,
-                            bool isError);
+  void invokeCallback(int callId, const std::string &result, bool isError);
 
  private:
   /**
