@@ -206,6 +206,7 @@ function initializeNativeModules() {
   invariant(bridgeConfig, '__fbBatchedBridgeConfig is not set, cannot invoke native modules')
 
   // 处理所有远程模块配置
+  // Array<[moduleName, constants, methods, promiseMethods, syncMethods]>
   const remoteModuleConfig = bridgeConfig.remoteModuleConfig || []
 
   remoteModuleConfig.forEach((config, moduleID) => {

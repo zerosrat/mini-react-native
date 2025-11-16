@@ -1,21 +1,151 @@
-# React Native 从零实现 - 教学项目
+# Mini React Native
 
-这是一个从零到一实现 React Native 核心机制的教学项目，深度解析 JavaScript 和 Native 代码之间的通信原理，为理解现代跨平台技术打下坚实基础。
+> **[中文文档](README_CN.md) | English**
 
-## 🎯 项目目标
+[![License](https://img.shields.io/badge/license-Not%20Yet%20Specified-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20iOS%20%7C%20Android-lightgrey.svg)]()
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
 
-- **深度理解**: 透彻掌握 React Native Bridge 和 JSI 架构的工作原理
-- **实战教学**: 通过完整的代码实现学习跨平台技术的核心机制
-- **技术进阶**: 从传统 Bridge 架构到新 JSI 架构的完整演进
+**The first complete educational project that implements React Native from scratch.**
 
-## 📋 项目规划
+A minimal React Native implementation that deeply explores core mechanisms from traditional Bridge architecture to modern JSI architecture. Helping developers who want to truly understand cross-platform technology internals.
 
-本项目采用分阶段渐进式开发，每个阶段都是完整可运行的实现：
+---
 
-- **🔄 [完整技术路线图](docs/roadmap.md)** - 查看 5 个阶段的详细规划
-- **⚡ [阶段1实施计划](docs/phase1-bridge-plan.md)** - 当前阶段的具体任务分解
+## Why This Project
 
-### 当前状态：阶段1 - Bridge 通信机制
+While React Native is widely used, there's a significant gap in resources that deeply explain its internals:
 
-**目标**: 完成 JavaScript ↔ Native 双向通信的真实实现
-**进度**: 基础架构已完成，正在实现真实的 JSC 集成
+- **Official docs** focus on usage, not implementation details
+- **Existing tutorials** rarely go beyond surface-level explanations
+- **React Native source code** is complex and hard to navigate (especially for JS developers unfamiliar with C++, Objective-C, and Java)
+
+**This project fills that gap** by providing a complete, from-scratch implementation with educational documentation at every step.
+
+## Key Features
+
+✅ **Progressive Learning** - 4 phases from Bridge to JSI, each phase is independently runnable  
+✅ **Real Implementation** - Genuine JavaScriptCore integration, RN-compatible design, not mocked code  
+✅ **Complete Documentation** - Detailed architecture analysis and implementation notes explaining every design decision
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+**System Requirements**:
+
+- macOS 10.15+
+- Xcode Command Line Tools (includes make and clang)
+- CMake 3.15+ (brew install cmake)
+- C++17 compatible compiler
+
+### Build and Run
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/mini-react-native.git
+cd mini-react-native
+
+# Build and run tests
+make test-deviceinfo
+
+# Expected output:
+# ✓ Module registered successfully
+# ✓ getSystemVersion: macOS 14.0
+# ✓ getModel: MacBookPro18,1
+```
+
+### Project Structure
+
+```
+mini-react-native/
+├── src/common/          # Cross-platform core code
+│   ├── bridge/          # JSCExecutor - JS engine integration
+│   ├── modules/         # Module registration and management
+│   └── utils/           # JSON serialization and utilities
+├── src/js/              # JavaScript implementation
+│   ├── MessageQueue.js  # RN-compatible message queue
+│   └── NativeModule.js  # Module proxy
+├── src/macos/           # Platform-specific implementation
+└── examples/            # Test cases
+```
+
+### Troubleshooting
+
+**Issue**: `JavaScriptCore framework not found`
+```bash
+# Solution: Ensure Xcode Command Line Tools are installed
+xcode-select --install
+```
+
+**Issue**: `CMake version too old`
+```bash
+# Solution: Install latest CMake via Homebrew
+brew install cmake
+```
+
+**Issue**: Build errors with C++ standard
+```bash
+# Solution: Ensure your compiler supports C++17
+clang++ --version  # Should be 10.0+
+```
+
+---
+
+## Roadmap
+
+### Phase 1: Bridge Communication ✅
+
+**Goal**: Complete JS ↔ Native bidirectional messaging
+
+- [x] JSCExecutor with real JavaScriptCore
+- [x] RN-compatible MessageQueue
+- [x] Native function injection
+- [x] Type conversion system
+- [x] Complete module system
+
+**Learning Value**: Understand the foundation of all RN communication
+
+### Phase 2: JavaScript Engine Deep Dive (3-4 weeks)
+
+**Goal**: Optimize JS engine integration + cross-platform support
+
+- [ ] iOS support
+- [ ] Memory management optimization
+- [ ] Chrome DevTools integration
+- [ ] Android platform support
+- [ ] Hot reload basics
+
+**Learning Value**: Master JS engine internals and multi-platform architecture
+
+### Phase 3: View Rendering System (4-5 weeks)
+
+**Goal**: Implement React component → native view rendering
+
+- [ ] Shadow Tree (Virtual DOM) implementation
+- [ ] Yoga layout engine integration
+- [ ] Basic components (View, Text, Image)
+- [ ] Event system (touch, gestures)
+- [ ] Diff algorithm and incremental updates
+
+**Learning Value**: Understand how React renders to native UI
+
+### Phase 4: New Architecture Migration (3-4 weeks)
+
+**Goal**: Implement JSI + TurboModules + Fabric
+
+- [ ] JSI synchronous calling
+- [ ] TurboModules with lazy loading
+- [ ] C++ object direct exposure to JS
+- [ ] Performance comparison: Bridge vs JSI
+- [ ] Migration guide
+
+**Learning Value**: Experience the future of React Native
+
+---
+
+**⭐ Star this repo if you find it helpful!**
+
+Your support keeps me motivated to continue!

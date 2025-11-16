@@ -503,70 +503,6 @@ void JSCExecutor::nativeLoggingHook(JSValueRef level, JSValueRef message) {
   }
 }
 
-JSValueRef JSCExecutor::nativeCallSyncHook(JSValueRef moduleID,
-                                           JSValueRef methodID,
-                                           JSValueRef args) {
-  std::cout << "[JSCExecutor] nativeCallSyncHook called (instance method)"
-            << std::endl;
-
-  try {
-    // 将JSValue参数转换为C++类型
-    double moduleIdDouble = JSValueToNumber(m_context, moduleID, nullptr);
-    double methodIdDouble = JSValueToNumber(m_context, methodID, nullptr);
-    unsigned int moduleIdInt = static_cast<unsigned int>(moduleIdDouble);
-    unsigned int methodIdInt = static_cast<unsigned int>(methodIdDouble);
-
-    std::cout << "[JSCExecutor] Sync call - Module: " << moduleIdInt
-              << ", Method: " << methodIdInt << std::endl;
-
-    // 将参数转换为JSON字符串
-    std::string argsJson = jsValueToJSONString(args);
-
-    // 检查模块注册器是否可用
-    if (!m_moduleRegistry) {
-      std::cout
-          << "[JSCExecutor] Error: ModuleRegistry not available for sync call"
-          << std::endl;
-      return JSValueMakeNull(m_context);
-    }
-
-    // 对于同步调用，我们需要立即获取结果
-    // 这里我们使用一个简化的实现：直接调用模块方法并等待结果
-
-    // 检查模块是否存在
-    if (!m_moduleRegistry->hasModule(moduleIdInt)) {
-      std::cout << "[JSCExecutor] Error: Module " << moduleIdInt
-                << " not found for sync call" << std::endl;
-      return JSValueMakeNull(m_context);
-    }
-
-    // 获取模块名称用于调试
-    std::string moduleName = m_moduleRegistry->getModuleName(moduleIdInt);
-    std::cout << "[JSCExecutor] Sync call to module: " << moduleName
-              << std::endl;
-
-    // 调用真实的模块实现（替换之前的 Mock 代码）
-    std::string result = m_moduleRegistry->callSerializableNativeHook(
-        moduleIdInt, methodIdInt, argsJson);
-
-    if (!result.empty()) {
-      std::cout << "[JSCExecutor] Sync method returned: " << result
-                << std::endl;
-      return stringToJSValue(result);
-    }
-
-    // 对于其他方法，返回错误
-    std::cout << "[JSCExecutor] Warning: Sync call not supported for "
-              << moduleName << "." << methodIdInt << std::endl;
-    return JSValueMakeNull(m_context);
-
-  } catch (const std::exception &e) {
-    std::cout << "[JSCExecutor] Error in nativeCallSyncHook: " << e.what()
-              << std::endl;
-    return JSValueMakeNull(m_context);
-  }
-}
-
 void JSCExecutor::processBridgeMessage(
     const mini_rn::bridge::BridgeMessage &message) {
   std::cout << "[JSCExecutor] Processing Bridge message with "
@@ -603,103 +539,72 @@ void JSCExecutor::processBridgeMessage(
   std::cout << "[JSCExecutor] Bridge message processing completed" << std::endl;
 }
 
+void JSCExecutor::nativeFlushQueueImmediate(JSValueRef queue) {
+  // Step 1: JSValue -> JSON字符串 (对齐RN: queue.toJSONString())
+  std::string queueStr = jsValueToJSONString(queue);
+
+  // Step 2: JSON字符串 -> BridgeMessage (替代 folly::parseJson)
+  std::cout << "[JSCExecutor] Parsing JSON with SimpleBridgeJSONParser..."
+            << std::endl;
+  mini_rn::bridge::BridgeMessage message =
+      mini_rn::utils::SimpleBridgeJSONParser::parseBridgeQueue(queueStr);
+
+  // Step 3: 处理消息
+  for (size_t i = 0; i < message.getCallCount(); i++) {
+    unsigned int moduleId = static_cast<unsigned int>(message.moduleIds[i]);
+    unsigned int methodId = static_cast<unsigned int>(message.methodIds[i]);
+    const std::string &params = message.params[i];
+    int callId = message.callbackIds[i];
+
+    // 通过 ModuleRegistry 调用 Native 模块方法
+    m_moduleRegistry->callNativeMethod(moduleId, methodId, params, callId);
+  }
+}
+
 void JSCExecutor::invokeCallback(int callId, const std::string &result,
                                  bool isError) {
-  std::cout << "[JSCExecutor] Handling module callback - CallId: " << callId
-            << ", IsError: " << (isError ? "true" : "false")
-            << ", Result: " << result << std::endl;
+  // 实现将结果返回给 JavaScript 的机制
+  // 调用 JavaScript 的 invokeCallbackAndReturnFlushedQueue 方法
 
-  try {
-    // 实现将结果返回给 JavaScript 的机制
-    // 调用 JavaScript 的 invokeCallbackAndReturnFlushedQueue 方法
+  // 获取全局 __fbBatchedBridge 对象
+  JSObjectRef bridgeObject = JSValueToObject(
+      m_context,
+      JSObjectGetProperty(m_context, m_globalObject,
+                          JSStringCreateWithUTF8CString("__fbBatchedBridge"),
+                          nullptr),
+      nullptr);
 
-    // 获取全局 __fbBatchedBridge 对象
-    JSStringRef bridgeName = JSStringCreateWithUTF8CString("__fbBatchedBridge");
-    JSValueRef bridgeValue =
-        JSObjectGetProperty(m_context, m_globalObject, bridgeName, nullptr);
-    JSStringRelease(bridgeName);
+  // 获取 invokeCallbackAndReturnFlushedQueue 方法
+  JSValueRef methodValue = JSObjectGetProperty(
+      m_context, bridgeObject,
+      JSStringCreateWithUTF8CString("invokeCallbackAndReturnFlushedQueue"),
+      nullptr);
 
-    if (!JSValueIsObject(m_context, bridgeValue)) {
-      std::cout << "[JSCExecutor] Warning: __fbBatchedBridge not available"
-                << std::endl;
-      return;
-    }
+  // 准备回调参数
+  // React Native 回调约定：第一个参数是错误，后续参数是结果
+  // 错误情况：[error]
+  // 成功情况：[null, result]
+  std::string argsJson =
+      isError ? "[\"" + result + "\"]" : "[null, " + result + "]";
 
-    JSObjectRef bridgeObject = JSValueToObject(m_context, bridgeValue, nullptr);
+  // 创建参数数组
+  JSValueRef arguments[2];
+  arguments[0] = JSValueMakeNumber(m_context, callId);  // callbackID
+  // 解析 JSON 参数
+  arguments[1] = JSValueMakeFromJSONString(
+      m_context, JSStringCreateWithUTF8CString(argsJson.c_str()));  // args
 
-    // 获取 invokeCallbackAndReturnFlushedQueue 方法
-    JSStringRef methodName =
-        JSStringCreateWithUTF8CString("invokeCallbackAndReturnFlushedQueue");
-    JSValueRef methodValue =
-        JSObjectGetProperty(m_context, bridgeObject, methodName, nullptr);
-    JSStringRelease(methodName);
+  // 调用 JavaScript 回调方法
+  JSValueRef exception = nullptr;
+  JSValueRef callResult =
+      JSObjectCallAsFunction(m_context, (JSObjectRef)methodValue,
+                             bridgeObject,  // thisObject
+                             2,             // argumentCount
+                             arguments,     // arguments
+                             &exception);
 
-    if (!JSValueIsObject(m_context, methodValue)) {
-      std::cout << "[JSCExecutor] Warning: invokeCallbackAndReturnFlushedQueue "
-                   "not available"
-                << std::endl;
-      return;
-    }
-
-    // 准备回调参数
-    // React Native 回调约定：第一个参数是错误，后续参数是结果
-    std::string argsJson;
-    if (isError) {
-      // 错误情况：[error]
-      argsJson = "[\"" + result + "\"]";
-    } else {
-      // 成功情况：[null, result]
-      // result 已经是 JSON 格式，不需要再加引号
-      argsJson = "[null, " + result + "]";
-    }
-
-    // 创建参数数组
-    JSValueRef arguments[2];
-    arguments[0] = JSValueMakeNumber(m_context, callId);  // callbackID
-
-    // 解析 JSON 参数
-    std::cout << "[JSCExecutor] Preparing callback args JSON: " << argsJson
-              << std::endl;
-    JSStringRef argsStr = JSStringCreateWithUTF8CString(argsJson.c_str());
-    JSValueRef argsValue = JSValueMakeFromJSONString(m_context, argsStr);
-    JSStringRelease(argsStr);
-
-    if (!argsValue) {
-      // JSON 解析失败，创建简单数组
-      std::cout << "[JSCExecutor] JSON parsing failed, creating simple array"
-                << std::endl;
-      JSValueRef simpleArgs[1];
-      simpleArgs[0] = stringToJSValue(result);
-      argsValue = JSObjectMakeArray(m_context, 1, simpleArgs, nullptr);
-    } else {
-      std::cout << "[JSCExecutor] JSON parsing successful" << std::endl;
-    }
-
-    arguments[1] = argsValue;  // args
-
-    // 调用 JavaScript 回调方法
-    JSValueRef exception = nullptr;
-    JSValueRef callResult =
-        JSObjectCallAsFunction(m_context, (JSObjectRef)methodValue,
-                               bridgeObject,  // thisObject
-                               2,             // argumentCount
-                               arguments,     // arguments
-                               &exception);
-
-    if (exception) {
-      handleJSException(exception);
-      std::cout << "[JSCExecutor] Error calling JavaScript callback"
-                << std::endl;
-    } else {
-      // 避免未使用变量的警告
-      (void)callResult;
-      std::cout << "[JSCExecutor] JavaScript callback executed successfully"
-                << std::endl;
-    }
-
-  } catch (const std::exception &e) {
-    std::cout << "[JSCExecutor] Error in handleModuleCallback: " << e.what()
-              << std::endl;
+  if (exception) {
+    handleJSException(exception);
   }
 }
 
