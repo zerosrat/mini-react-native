@@ -49,12 +49,7 @@ git clone https://github.com/yourusername/mini-react-native.git
 cd mini-react-native
 
 # Build and run tests
-make test-integration
-
-# Expected output:
-# ✓ Module registered successfully
-# ✓ getSystemVersion: macOS 14.0
-# ✓ getModel: MacBookPro18,1
+make test
 ```
 
 ### Project Structure

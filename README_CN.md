@@ -49,12 +49,7 @@ git clone https://github.com/yourusername/mini-react-native.git
 cd mini-react-native
 
 # 构建并运行测试
-make test-integration
-
-# 预期输出：
-# ✓ 模块注册成功
-# ✓ getSystemVersion: macOS 14.0
-# ✓ getModel: MacBookPro18,1
+make test
 ```
 
 ### 项目结构
