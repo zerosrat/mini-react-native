@@ -22,10 +22,10 @@ console.log('🔥 DeviceInfo Integration Test Starting...')
 console.log('📦 Loading dependencies from global objects...')
 
 // 从 global 对象获取预加载的模块
-// MessageQueue = global.MessageQueue
-// BatchedBridge = global.BatchedBridge || global.__fbBatchedBridge
-// NativeModules = global.NativeModules
-// DeviceInfo = global.DeviceInfo
+const MessageQueue = global.MessageQueue
+const BatchedBridge = global.BatchedBridge || global.__fbBatchedBridge
+const NativeModules = global.NativeModules
+const DeviceInfo = global.DeviceInfo
 
 // 验证依赖是否正确加载
 const dependencies = [

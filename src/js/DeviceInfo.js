@@ -17,28 +17,17 @@
 
 'use strict'
 
-// 获取 NativeModules（适配多种加载方式）
-// const NativeModules = (function () {
-//   if (typeof require !== 'undefined') {
-//     return require('./NativeModule')
-//   } else if (typeof global !== 'undefined' && global.NativeModules) {
-//     return global.NativeModules
-//   } else {
-//     console.error('[DeviceInfo] NativeModules not found')
-//     return null
-//   }
-// })()
+// 使用 CommonJS require 导入 NativeModules
+const NativeModules = require('./NativeModule')
+console.log('[DeviceInfo] NativeModules imported via require:', typeof NativeModules)
 
 // 获取 DeviceInfo 原生模块
-// 在新的系统中，模块会自动初始化并注册到 NativeModules 中
 let DeviceInfoNative = null
 
 // 延迟获取原生模块，确保模块系统已初始化
 function getDeviceInfoNative() {
   if (!DeviceInfoNative) {
-    console.log('NativeModules---', NativeModules, Object.keys(global.NativeModules))
-    // DeviceInfoNative = NativeModules.get('DeviceInfo')
-    DeviceInfoNative = global.NativeModules.get('DeviceInfo')
+    DeviceInfoNative = NativeModules.get('DeviceInfo')
 
     if (!DeviceInfoNative) {
       console.error('[DeviceInfo] Native module not found. Available modules:', Object.keys(NativeModules.getAll()))
@@ -120,14 +109,7 @@ Object.defineProperty(DeviceInfo, 'Constants', {
   },
 })
 
-// 导出模块
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = DeviceInfo
-} else if (typeof global !== 'undefined') {
-  global.DeviceInfo = DeviceInfo
-}
+// 使用 CommonJS 导出
+module.exports = DeviceInfo
 
-// 兼容性：支持 window 环境
-if (typeof window !== 'undefined') {
-  window.DeviceInfo = DeviceInfo
-}
+console.log('[DeviceInfo] DeviceInfo.js loaded - CommonJS module')

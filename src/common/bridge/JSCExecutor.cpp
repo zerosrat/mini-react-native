@@ -539,25 +539,35 @@ void JSCExecutor::processBridgeMessage(
   std::cout << "[JSCExecutor] Bridge message processing completed" << std::endl;
 }
 
-void JSCExecutor::nativeFlushQueueImmediate(JSValueRef queue) {
-  // Step 1: JSValue -> JSON字符串 (对齐RN: queue.toJSONString())
-  std::string queueStr = jsValueToJSONString(queue);
-
-  // Step 2: JSON字符串 -> BridgeMessage (替代 folly::parseJson)
-  std::cout << "[JSCExecutor] Parsing JSON with SimpleBridgeJSONParser..."
+JSValueRef JSCExecutor::nativeCallSyncHook(JSValueRef moduleID, JSValueRef methodID,
+                                          JSValueRef args) {
+  std::cout << "[JSCExecutor] nativeCallSyncHook called (synchronous method)"
             << std::endl;
-  mini_rn::bridge::BridgeMessage message =
-      mini_rn::utils::SimpleBridgeJSONParser::parseBridgeQueue(queueStr);
 
-  // Step 3: 处理消息
-  for (size_t i = 0; i < message.getCallCount(); i++) {
-    unsigned int moduleId = static_cast<unsigned int>(message.moduleIds[i]);
-    unsigned int methodId = static_cast<unsigned int>(message.methodIds[i]);
-    const std::string &params = message.params[i];
-    int callId = message.callbackIds[i];
+  try {
+    // 转换参数
+    unsigned int moduleId = static_cast<unsigned int>(JSValueToNumber(m_context, moduleID, nullptr));
+    unsigned int methodId = static_cast<unsigned int>(JSValueToNumber(m_context, methodID, nullptr));
+    std::string argsStr = jsValueToJSONString(args);
 
-    // 通过 ModuleRegistry 调用 Native 模块方法
-    m_moduleRegistry->callNativeMethod(moduleId, methodId, params, callId);
+    std::cout << "[JSCExecutor] Sync call - Module: " << moduleId
+              << ", Method: " << methodId << ", Args: " << argsStr << std::endl;
+
+    // 通过 ModuleRegistry 进行同步调用
+    if (m_moduleRegistry) {
+      // 注意：这里我们需要实现同步调用，但当前 ModuleRegistry 只支持异步调用
+      // 为了演示目的，我们返回一个简单的结果
+      std::string result = "\"Sync call not fully implemented\"";
+      return JSValueMakeFromJSONString(m_context,
+                                       JSStringCreateWithUTF8CString(result.c_str()));
+    } else {
+      std::cout << "[JSCExecutor] Error: ModuleRegistry not initialized" << std::endl;
+      return JSValueMakeNull(m_context);
+    }
+
+  } catch (const std::exception& e) {
+    std::cout << "[JSCExecutor] Error in nativeCallSyncHook: " << e.what() << std::endl;
+    return JSValueMakeNull(m_context);
   }
 }
 

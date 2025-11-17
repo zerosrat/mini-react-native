@@ -1,0 +1,32 @@
+{
+  "name": "mini-react-native",
+  "version": "1.0.0",
+  "description": "> **[中文文档](README_CN.md) | English**",
+  "main": ".prettierrc.js",
+  "directories": {
+    "doc": "docs",
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup -c",
+    "build:watch": "rollup -c -w",
+    "clean": "rm -rf dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zerosrat/mini-react-native.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zerosrat/mini-react-native/issues"
+  },
+  "homepage": "https://github.com/zerosrat/mini-react-native#readme",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "rollup": "^4.53.2"
+  }
+}

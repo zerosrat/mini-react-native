@@ -14,19 +14,9 @@
 
 'use strict'
 
-// 获取 BatchedBridge（适配多种加载方式）
-// const BatchedBridge = (function () {
-//   if (typeof require !== 'undefined') {
-//     return require('./BatchedBridge')
-//   } else if (typeof global !== 'undefined' && global.BatchedBridge) {
-//     return global.BatchedBridge
-//   } else if (typeof global !== 'undefined' && global.__fbBatchedBridge) {
-//     return global.__fbBatchedBridge
-//   } else {
-//     console.error('[NativeModule] BatchedBridge not found')
-//     return null
-//   }
-// })()
+// 使用 CommonJS require 导入 BatchedBridge
+const BatchedBridge = require('./BatchedBridge')
+console.log('[NativeModule] BatchedBridge imported via require:', typeof BatchedBridge)
 
 // 类型定义 (对应官方的 MethodType)
 const MethodType = {
@@ -281,24 +271,7 @@ const NativeModuleInterface = {
   _createErrorFromErrorData: createErrorFromErrorData,
 }
 
-// 导出模块
-if (typeof module !== 'undefined' && module.exports) {
-  console.log('------------------------------module.exports', module, module.exports)
-  module.exports = NativeModuleInterface
-} else if (typeof global !== 'undefined') {
-  global.NativeModules = NativeModuleInterface
-}
+// 使用 CommonJS 导出
+module.exports = NativeModuleInterface
 
-// 兼容性：支持 window 环境
-if (typeof window !== 'undefined') {
-  window.NativeModules = NativeModuleInterface
-}
-
-// NativeModuleInterface.initialize()
-console.log(
-  '-------->>>>>>>>>NativeModule---',
-  typeof global,
-  JSON.stringify(global.NativeModules),
-  JSON.stringify(NativeModuleInterface),
-  Object.keys(NativeModuleInterface),
-)
+console.log('[NativeModule] NativeModule.js loaded - CommonJS module')

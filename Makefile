@@ -25,10 +25,30 @@ configure:
 	@cd $(BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
 	@echo "✅ Configuration complete"
 
+# 构建 JavaScript bundle
+.PHONY: js-build
+js-build:
+	@echo "📦 Building JavaScript bundle..."
+	@npm run build
+	@echo "✅ JavaScript bundle built"
+
+# 监视 JavaScript 文件变化（开发模式）
+.PHONY: js-watch
+js-watch:
+	@echo "👀 Watching JavaScript files for changes..."
+	@npm run build:watch
+
+# 清理 JavaScript 构建文件
+.PHONY: js-clean
+js-clean:
+	@echo "🧹 Cleaning JavaScript build files..."
+	@npm run clean
+	@echo "✅ JavaScript files cleaned"
+
 # 编译项目
-# 执行顺序：configure → build
+# 执行顺序：js-build → configure → build
 .PHONY: build
-build: configure
+build: js-build configure
 	@echo "🔨 Building Mini React Native..."
 	@cd $(BUILD_DIR) && make -j$(CORES)
 	@echo "✅ Build complete"
@@ -76,9 +96,16 @@ test-deviceinfo: build
 	@./$(BUILD_DIR)/test_deviceinfo
 	@echo "✅ DeviceInfo test complete"
 
+# 运行 DeviceInfo 模块测试（使用打包后的 JavaScript）
+.PHONY: test-deviceinfo-bundled
+test-deviceinfo-bundled: build
+	@echo "🧪 Running DeviceInfo module test with bundled JavaScript..."
+	@./$(BUILD_DIR)/test_deviceinfo_bundled
+	@echo "✅ DeviceInfo bundled test complete"
+
 # 清理构建文件
 .PHONY: clean
-clean:
+clean: js-clean
 	@echo "🧹 Cleaning build files..."
 	@rm -rf $(BUILD_DIR)
 	@echo "✅ Clean complete"
@@ -141,8 +168,11 @@ help:
 	@echo "Mini React Native - Available Commands:"
 	@echo ""
 	@echo "构建命令:"
-	@echo "  make build            - 编译项目 (默认目标)"
-	@echo "  make clean            - 清理构建文件"
+	@echo "  make build            - 编译项目 (默认目标，包含 JS 构建)"
+	@echo "  make js-build         - 仅构建 JavaScript bundle"
+	@echo "  make js-watch         - 监视 JS 文件变化并自动构建"
+	@echo "  make clean            - 清理所有构建文件"
+	@echo "  make js-clean         - 仅清理 JavaScript 构建文件"
 	@echo "  make rebuild          - 完全重新构建"
 	@echo "  make configure        - 仅配置 CMake"
 	@echo ""
