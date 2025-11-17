@@ -74,8 +74,8 @@ function genMethod(moduleID, methodID, type) {
           moduleID,
           methodID,
           args,
-          (data) => resolve(data),
           (errorData) => reject(createErrorFromErrorData(errorData)),
+          (data) => resolve(data),
         )
       })
     }

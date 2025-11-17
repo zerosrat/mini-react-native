@@ -60,12 +60,10 @@ test: build
 	@echo "🧪 Running all tests..."
 	@echo "\n📝 Test 1: Basic functionality test"
 	@./$(BUILD_DIR)/mini_rn_test
-	@echo "\n📝 Test 2: MessageQueue validation test"
-	@./$(BUILD_DIR)/test_messagequeue
-	@echo "\n📝 Test 3: NativeModule validation test"
+	@echo "\n📝 Test 2: Module framework test"
 	@./$(BUILD_DIR)/test_module_framework
-	@echo "\n📝 Test 4: DeviceInfo module test"
-	@./$(BUILD_DIR)/test_deviceinfo
+	@echo "\n📝 Test 3: Integration test"
+	@./$(BUILD_DIR)/test_integration
 	@echo "\n✅ All tests complete"
 
 # 运行基础测试
@@ -75,33 +73,19 @@ test-basic: build
 	@./$(BUILD_DIR)/mini_rn_test
 	@echo "✅ Basic test complete"
 
-# 运行 MessageQueue 测试
-.PHONY: test-messagequeue
-test-messagequeue: build
-	@echo "🧪 Running MessageQueue validation test..."
-	@./$(BUILD_DIR)/test_messagequeue
-	@echo "✅ MessageQueue test complete"
-
-# 运行 NativeModule 测试
+# 运行模块框架测试
 .PHONY: test-module
 test-module: build
-	@echo "🧪 Running NativeModule validation test..."
+	@echo "🧪 Running module framework test..."
 	@./$(BUILD_DIR)/test_module_framework
-	@echo "✅ NativeModule test complete"
+	@echo "✅ Module framework test complete"
 
-# 运行 DeviceInfo 模块测试
-.PHONY: test-deviceinfo
-test-deviceinfo: build
-	@echo "🧪 Running DeviceInfo module test..."
-	@./$(BUILD_DIR)/test_deviceinfo
-	@echo "✅ DeviceInfo test complete"
-
-# 运行 DeviceInfo 模块测试（使用打包后的 JavaScript）
-.PHONY: test-deviceinfo-bundled
-test-deviceinfo-bundled: build
-	@echo "🧪 Running DeviceInfo module test with bundled JavaScript..."
-	@./$(BUILD_DIR)/test_deviceinfo_bundled
-	@echo "✅ DeviceInfo bundled test complete"
+# 运行集成测试
+.PHONY: test-integration
+test-integration: build
+	@echo "🧪 Running integration test..."
+	@./$(BUILD_DIR)/test_integration
+	@echo "✅ Integration test complete"
 
 # 清理构建文件
 .PHONY: clean
@@ -179,9 +163,8 @@ help:
 	@echo "测试命令:"
 	@echo "  make test             - 运行所有测试"
 	@echo "  make test-basic       - 仅运行基础功能测试"
-	@echo "  make test-messagequeue- 仅运行 MessageQueue 测试"
-	@echo "  make test-module      - 仅运行 NativeModule 测试"
-	@echo "  make test-deviceinfo  - 仅运行 DeviceInfo 模块测试"
+	@echo "  make test-module      - 仅运行模块框架测试"
+	@echo "  make test-integration - 仅运行集成测试"
 	@echo ""
 	@echo "开发工具:"
 	@echo "  make install-deps     - 安装开发依赖"
@@ -196,4 +179,4 @@ help:
 	@echo "示例:"
 	@echo "  make CMAKE_BUILD_TYPE=Release build"
 	@echo "  make test"
-	@echo "  make test-messagequeue"
+	@echo "  make test-integration"

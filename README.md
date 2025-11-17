@@ -49,7 +49,7 @@ git clone https://github.com/yourusername/mini-react-native.git
 cd mini-react-native
 
 # Build and run tests
-make test-deviceinfo
+make test-integration
 
 # Expected output:
 # ✓ Module registered successfully

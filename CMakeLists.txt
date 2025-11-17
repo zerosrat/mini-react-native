@@ -111,25 +111,15 @@ add_executable(mini_rn_test examples/test_basic.cpp)
 target_include_directories(mini_rn_test PRIVATE src)
 target_link_libraries(mini_rn_test mini_react_native)
 
-# MessageQueue 测试可执行文件
-add_executable(test_messagequeue examples/test_messagequeue.cpp)
-target_include_directories(test_messagequeue PRIVATE src)
-target_link_libraries(test_messagequeue mini_react_native)
-
 # 模块框架测试可执行文件
 add_executable(test_module_framework examples/test_module_framework.cpp)
 target_include_directories(test_module_framework PRIVATE src)
 target_link_libraries(test_module_framework mini_react_native)
 
-# DeviceInfo 模块测试可执行文件
-add_executable(test_deviceinfo examples/test_deviceinfo.cpp)
-target_include_directories(test_deviceinfo PRIVATE src)
-target_link_libraries(test_deviceinfo mini_react_native)
-
-# DeviceInfo 模块测试可执行文件（使用打包后的 JavaScript bundle）
-add_executable(test_deviceinfo_bundled examples/test_deviceinfo_bundled.cpp)
-target_include_directories(test_deviceinfo_bundled PRIVATE src)
-target_link_libraries(test_deviceinfo_bundled mini_react_native)
+# 集成测试可执行文件（使用打包后的 JavaScript bundle）
+add_executable(test_integration examples/test_integration.cpp)
+target_include_directories(test_integration PRIVATE src)
+target_link_libraries(test_integration mini_react_native)
 
 # 安装配置（make install 时才会执行）
 # 安装静态库到 /usr/local/lib 下

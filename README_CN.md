@@ -49,7 +49,7 @@ git clone https://github.com/yourusername/mini-react-native.git
 cd mini-react-native
 
 # 构建并运行测试
-make test-deviceinfo
+make test-integration
 
 # 预期输出：
 # ✓ 模块注册成功

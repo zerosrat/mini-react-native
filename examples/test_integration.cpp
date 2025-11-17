@@ -12,6 +12,23 @@ using namespace mini_rn::bridge;
 using namespace mini_rn::modules;
 
 /**
+ * Mini React Native - 端到端集成测试
+ *
+ * 这是标准的集成测试模板，验证完整的 JavaScript ↔ Native 通信流程。
+ * 使用 Rollup 打包后的 JavaScript bundle，测试真实的模块交互场景。
+ *
+ * 测试内容：
+ * - JavaScript bundle 加载和执行
+ * - Native 模块注册和配置注入
+ * - Bridge 双向通信
+ * - 具体模块功能验证
+ *
+ * 使用方式：
+ * - make test-integration
+ * - 或直接运行 ./build/test_integration
+ */
+
+/**
  * 读取文件内容到字符串
  * @param filePath 文件路径
  * @return 文件内容字符串，如果失败返回空字符串
@@ -41,8 +58,8 @@ std::string readFile(const std::string& filePath) {
   }
 }
 
-void testDeviceInfoWithBundle() {
-  std::cout << "\n=== DeviceInfo Module Test with Bundled JavaScript ===" << std::endl;
+void testIntegration() {
+  std::cout << "\n=== Mini React Native Integration Test ===" << std::endl;
 
   try {
     // 创建 JSCExecutor
@@ -112,11 +129,11 @@ void testDeviceInfoWithBundle() {
 }
 
 int main() {
-  std::cout << "Mini React Native - DeviceInfo Module Test (Bundled JavaScript)" << std::endl;
-  std::cout << "This test verifies the DeviceInfo module using the Rollup-bundled JavaScript" << std::endl;
+  std::cout << "Mini React Native - Integration Test" << std::endl;
+  std::cout << "This test verifies the complete JavaScript ↔ Native communication using bundled JavaScript" << std::endl;
 
-  // 测试使用打包后的 bundle
-  testDeviceInfoWithBundle();
+  // 运行集成测试
+  testIntegration();
 
   return 0;
 }
