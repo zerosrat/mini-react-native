@@ -31,9 +31,17 @@ set(COMMON_SOURCES
 
 # 平台特定源文件
 if(APPLE)
-    set(PLATFORM_SOURCES
-        src/macos/modules/deviceinfo/DeviceInfoModule.mm
-    )
+    # 根据具体平台选择源文件
+    if(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+        set(PLATFORM_SOURCES
+            src/ios/modules/deviceinfo/DeviceInfoModule.mm
+        )
+    else()
+        # macOS
+        set(PLATFORM_SOURCES
+            src/macos/modules/deviceinfo/DeviceInfoModule.mm
+        )
+    endif()
     # 设置 Objective-C++ 编译标志
     set_source_files_properties(${PLATFORM_SOURCES}
         PROPERTIES COMPILE_FLAGS "-fobjc-arc")
@@ -63,36 +71,44 @@ if(APPLE)
         message(FATAL_ERROR "JavaScriptCore framework not found")
     endif()
 
-    # 查找并链接 IOKit 框架 (DeviceInfo 模块需要)
-    find_library(IOKIT_FRAMEWORK IOKit)
-    if(NOT IOKIT_FRAMEWORK)
-        message(FATAL_ERROR "IOKit framework not found")
-    endif()
-
-    # 查找并链接 Foundation 框架
+    # 查找并链接 Foundation 框架 (所有 Apple 平台共用)
     find_library(FOUNDATION_FRAMEWORK Foundation)
     if(NOT FOUNDATION_FRAMEWORK)
         message(FATAL_ERROR "Foundation framework not found")
     endif()
 
+    # 平台特定框架
+    if(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+        # iOS 特定框架
+        find_library(UIKIT_FRAMEWORK UIKit)
+        if(NOT UIKIT_FRAMEWORK)
+            message(FATAL_ERROR "UIKit framework not found")
+        endif()
+        set(PLATFORM_FRAMEWORKS ${UIKIT_FRAMEWORK})
+    else()
+        # macOS 特定框架
+        find_library(IOKIT_FRAMEWORK IOKit)
+        if(NOT IOKIT_FRAMEWORK)
+            message(FATAL_ERROR "IOKit framework not found")
+        endif()
+        set(PLATFORM_FRAMEWORKS ${IOKIT_FRAMEWORK})
+    endif()
+
     # 链接所需框架
     target_link_libraries(mini_react_native
         ${JAVASCRIPTCORE_FRAMEWORK}
-        ${IOKIT_FRAMEWORK}
         ${FOUNDATION_FRAMEWORK}
+        ${PLATFORM_FRAMEWORKS}
     )
 
-    # macOS 特定设置
-    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    # 平台特定部署目标设置
+    if(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+        set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
+        message(STATUS "Building for iOS with deployment target: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+    elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15")
         message(STATUS "Building for macOS with deployment target: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
     endif()
-
-    # iOS 特定设置 (暂时注释，专注 macOS)
-    # if(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
-    #     set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0")
-    #     message(STATUS "Building for iOS with deployment target: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
-    # endif()
 
 elseif(ANDROID)
     # Android 配置 (未来实现)
@@ -120,6 +136,11 @@ target_link_libraries(test_module_framework mini_react_native)
 add_executable(test_integration examples/test_integration.cpp)
 target_include_directories(test_integration PRIVATE src)
 target_link_libraries(test_integration mini_react_native)
+
+# iOS DeviceInfo 测试可执行文件
+add_executable(test_ios_deviceinfo examples/test_ios_deviceinfo.cpp)
+target_include_directories(test_ios_deviceinfo PRIVATE src)
+target_link_libraries(test_ios_deviceinfo mini_react_native)
 
 # 安装配置（make install 时才会执行）
 # 安装静态库到 /usr/local/lib 下

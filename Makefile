@@ -53,6 +53,48 @@ build: js-build configure
 	@cd $(BUILD_DIR) && make -j$(CORES)
 	@echo "✅ Build complete"
 
+# iOS 构建配置
+.PHONY: ios-configure
+ios-configure:
+	@echo "🔧 Configuring iOS build system..."
+	@mkdir -p $(BUILD_DIR)_ios
+	@cd $(BUILD_DIR)_ios && DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer cmake \
+		-DCMAKE_SYSTEM_NAME=iOS \
+		-DCMAKE_OSX_ARCHITECTURES=arm64 \
+		-DCMAKE_OSX_SYSROOT=$$(DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun --sdk iphoneos --show-sdk-path) \
+		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+		-DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+		..
+	@echo "✅ iOS configuration complete"
+
+# iOS 模拟器构建配置
+.PHONY: ios-sim-configure
+ios-sim-configure:
+	@echo "🔧 Configuring iOS Simulator build system..."
+	@mkdir -p $(BUILD_DIR)_ios_sim
+	@cd $(BUILD_DIR)_ios_sim && DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer cmake \
+		-DCMAKE_SYSTEM_NAME=iOS \
+		-DCMAKE_OSX_ARCHITECTURES=x86_64 \
+		-DCMAKE_OSX_SYSROOT=$$(DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun --sdk iphonesimulator --show-sdk-path) \
+		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+		-DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+		..
+	@echo "✅ iOS Simulator configuration complete"
+
+# 构建 iOS 版本
+.PHONY: ios-build
+ios-build: js-build ios-configure
+	@echo "🔨 Building Mini React Native for iOS..."
+	@cd $(BUILD_DIR)_ios && make -j$(CORES)
+	@echo "✅ iOS build complete"
+
+# 构建 iOS 模拟器版本
+.PHONY: ios-sim-build
+ios-sim-build: js-build ios-sim-configure
+	@echo "🔨 Building Mini React Native for iOS Simulator..."
+	@cd $(BUILD_DIR)_ios_sim && make -j$(CORES)
+	@echo "✅ iOS Simulator build complete"
+
 # 运行测试
 # 执行顺序：configure → build → test
 .PHONY: test
@@ -91,7 +133,7 @@ test-integration: build
 .PHONY: clean
 clean: js-clean
 	@echo "🧹 Cleaning build files..."
-	@rm -rf $(BUILD_DIR)
+	@rm -rf $(BUILD_DIR) $(BUILD_DIR)_ios $(BUILD_DIR)_ios_sim
 	@echo "✅ Clean complete"
 
 # 完全重建
@@ -159,6 +201,12 @@ help:
 	@echo "  make js-clean         - 仅清理 JavaScript 构建文件"
 	@echo "  make rebuild          - 完全重新构建"
 	@echo "  make configure        - 仅配置 CMake"
+	@echo ""
+	@echo "iOS 构建命令:"
+	@echo "  make ios-build        - 构建 iOS 设备版本"
+	@echo "  make ios-sim-build    - 构建 iOS 模拟器版本"
+	@echo "  make ios-configure    - 仅配置 iOS 构建"
+	@echo "  make ios-sim-configure - 仅配置 iOS 模拟器构建"
 	@echo ""
 	@echo "测试命令:"
 	@echo "  make test             - 运行所有测试"
