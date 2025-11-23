@@ -46,9 +46,9 @@ print_error() {
 
 # 检查 iOS 构建是否存在
 check_ios_build() {
-    if [ ! -d "build_ios_sim" ]; then
-        print_error "iOS 模拟器构建不存在！"
-        print_info "请先运行: make ios-sim-build"
+    if [ ! -d "build_ios" ]; then
+        print_error "iOS 构建不存在！"
+        print_info "请先运行: make ios-build"
         exit 1
     fi
 }
@@ -158,22 +158,22 @@ run_all_tests() {
     local failed_tests=0
 
     # 基础测试
-    if ! run_test "基础功能" "./build_ios_sim/mini_rn_test.app/mini_rn_test" "验证 JSCExecutor 基础功能"; then
+    if ! run_test "基础功能" "./build_ios/mini_rn_test.app/mini_rn_test" "验证 JSCExecutor 基础功能"; then
         ((failed_tests++))
     fi
 
     # DeviceInfo 测试
-    if ! run_test "DeviceInfo" "./build_ios_sim/test_ios_deviceinfo.app/test_ios_deviceinfo" "测试 iOS 设备信息获取和性能"; then
+    if ! run_test "DeviceInfo" "./build_ios/test_ios_deviceinfo.app/test_ios_deviceinfo" "测试 iOS 设备信息获取和性能"; then
         ((failed_tests++))
     fi
 
     # 模块框架测试
-    if ! run_test "模块框架" "./build_ios_sim/test_module_framework.app/test_module_framework" "验证模块注册和调用机制"; then
+    if ! run_test "模块框架" "./build_ios/test_module_framework.app/test_module_framework" "验证模块注册和调用机制"; then
         ((failed_tests++))
     fi
 
     # 集成测试
-    if ! run_test "集成测试" "./build_ios_sim/test_integration.app/test_integration" "完整 JavaScript ↔ Native 通信测试"; then
+    if ! run_test "集成测试" "./build_ios/test_integration.app/test_integration" "完整 JavaScript ↔ Native 通信测试"; then
         ((failed_tests++))
     fi
 
@@ -198,28 +198,28 @@ main() {
             check_ios_build
             check_simulator
             boot_simulator
-            run_test "基础功能" "./build_ios_sim/mini_rn_test.app/mini_rn_test" "验证 JSCExecutor 基础功能"
+            run_test "基础功能" "./build_ios/mini_rn_test.app/mini_rn_test" "验证 JSCExecutor 基础功能"
             ;;
         "deviceinfo")
             print_header
             check_ios_build
             check_simulator
             boot_simulator
-            run_test "DeviceInfo" "./build_ios_sim/test_ios_deviceinfo.app/test_ios_deviceinfo" "测试 iOS 设备信息获取和性能"
+            run_test "DeviceInfo" "./build_ios/test_ios_deviceinfo.app/test_ios_deviceinfo" "测试 iOS 设备信息获取和性能"
             ;;
         "module")
             print_header
             check_ios_build
             check_simulator
             boot_simulator
-            run_test "模块框架" "./build_ios_sim/test_module_framework.app/test_module_framework" "验证模块注册和调用机制"
+            run_test "模块框架" "./build_ios/test_module_framework.app/test_module_framework" "验证模块注册和调用机制"
             ;;
         "integration")
             print_header
             check_ios_build
             check_simulator
             boot_simulator
-            run_test "集成测试" "./build_ios_sim/test_integration.app/test_integration" "完整 JavaScript ↔ Native 通信测试"
+            run_test "集成测试" "./build_ios/test_integration.app/test_integration" "完整 JavaScript ↔ Native 通信测试"
             ;;
         "all")
             run_all_tests
