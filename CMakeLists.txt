@@ -137,6 +137,11 @@ add_executable(test_integration examples/test_integration.cpp)
 target_include_directories(test_integration PRIVATE src)
 target_link_libraries(test_integration mini_react_native)
 
+# iOS DeviceInfo 测试可执行文件
+add_executable(test_ios_deviceinfo examples/test_ios_deviceinfo.cpp)
+target_include_directories(test_ios_deviceinfo PRIVATE src)
+target_link_libraries(test_ios_deviceinfo mini_react_native)
+
 # 安装配置（make install 时才会执行）
 # 安装静态库到 /usr/local/lib 下
 install(TARGETS mini_react_native
