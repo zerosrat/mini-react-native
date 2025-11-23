@@ -3,6 +3,7 @@
 #include <memory>
 #include <sstream>
 #include <vector>
+#include <chrono>
 
 #include "common/bridge/JSCExecutor.h"
 #include "common/modules/DeviceInfoModule.h"
@@ -58,6 +59,47 @@ std::string readFile(const std::string& filePath) {
   }
 }
 
+/**
+ * 性能测试函数 - 测试 Bridge 通信性能
+ * @param executor JSCExecutor 实例
+ */
+void performanceTest(JSCExecutor& executor) {
+  std::cout << "\n3.5. Testing Bridge communication performance..." << std::endl;
+
+  auto start = std::chrono::high_resolution_clock::now();
+
+  // 执行性能测试脚本
+  std::string performanceScript = R"(
+    // 性能测试：调用 DeviceInfo 方法
+    try {
+      // getSystemVersion (methodId = 1)
+      var systemVersion = global.nativeCallSyncHook(0, 1, []);
+
+      // getDeviceId (methodId = 2)
+      var deviceId = global.nativeCallSyncHook(0, 2, []);
+
+      console.log('✅ Performance test completed - SystemVersion:', systemVersion, 'DeviceId:', deviceId);
+    } catch (e) {
+      console.log('❌ Performance test failed:', e.toString());
+    }
+  )";
+
+  executor.loadApplicationScript(performanceScript, "performance_test.js");
+
+  auto end = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+  // 性能报告
+  double ms = duration.count() / 1000.0;
+  std::cout << "   Bridge call duration: " << ms << " ms" << std::endl;
+
+  if (ms < 10.0) {
+    std::cout << "   ✅ Performance requirement met (< 10ms)" << std::endl;
+  } else {
+    std::cout << "   ⚠️ Performance slower than expected (>= 10ms)" << std::endl;
+  }
+}
+
 void testIntegration() {
   std::cout << "\n=== Mini React Native Integration Test ===" << std::endl;
 
@@ -70,18 +112,41 @@ void testIntegration() {
       std::cout << "[JS Exception] " << error << std::endl;
     });
 
+    // 直接测试 DeviceInfo 原生方法
+    std::cout << "\n1. Testing DeviceInfo methods directly..." << std::endl;
+    auto deviceInfoForTesting = std::make_unique<DeviceInfoModule>();
+    std::cout << "   UniqueId: " << deviceInfoForTesting->getUniqueIdImpl() << std::endl;
+    std::cout << "   SystemVersion: " << deviceInfoForTesting->getSystemVersionImpl() << std::endl;
+    std::cout << "   DeviceId: " << deviceInfoForTesting->getDeviceIdImpl() << std::endl;
+
     // 注册 DeviceInfo 模块（自动注入配置）
-    std::cout << "\n1. Registering DeviceInfo module and injecting configuration..."
+    std::cout << "\n2. Registering DeviceInfo module and injecting configuration..."
               << std::endl;
     std::vector<std::unique_ptr<mini_rn::modules::NativeModule>> modules;
     modules.push_back(std::make_unique<DeviceInfoModule>());
     executor.registerModules(std::move(modules));
 
     // 加载打包后的 JavaScript bundle
-    std::cout << "\n2. Loading JavaScript bundle..." << std::endl;
+    std::cout << "\n3. Loading JavaScript bundle..." << std::endl;
 
-    std::string bundlePath = "dist/bundle.js";
-    std::string bundleScript = readFile(bundlePath);
+    // 尝试多个可能的路径（支持不同的工作目录）
+    std::vector<std::string> possiblePaths = {
+        "dist/bundle.js",                                    // 项目根目录
+        "../dist/bundle.js",                                 // 从 build 目录
+        "../../dist/bundle.js",                              // 从深层目录
+        "/Users/yujiayu02/Dev/Repo/github/mini-react-native/dist/bundle.js"  // 绝对路径
+    };
+
+    std::string bundlePath;
+    std::string bundleScript;
+
+    for (const auto& path : possiblePaths) {
+        bundleScript = readFile(path);
+        if (!bundleScript.empty()) {
+            bundlePath = path;
+            break;
+        }
+    }
 
     if (bundleScript.empty()) {
       std::cout << "[Error] Failed to load JavaScript bundle: " << bundlePath
@@ -98,11 +163,30 @@ void testIntegration() {
     executor.loadApplicationScript(bundleScript, bundlePath);
     std::cout << "   ✓ Bundle executed successfully" << std::endl;
 
-    // 加载测试文件
-    std::cout << "\n3. Loading DeviceInfo integration test..." << std::endl;
+    // 性能测试
+    performanceTest(executor);
 
-    std::string testPath = "examples/scripts/test_deviceinfo.js";
-    std::string testScript = readFile(testPath);
+    // 加载测试文件
+    std::cout << "\n4. Loading DeviceInfo integration test..." << std::endl;
+
+    // 尝试多个可能的测试脚本路径
+    std::vector<std::string> possibleTestPaths = {
+        "examples/scripts/test_deviceinfo.js",                                    // 项目根目录
+        "../examples/scripts/test_deviceinfo.js",                                 // 从 build 目录
+        "../../examples/scripts/test_deviceinfo.js",                              // 从深层目录
+        "/Users/yujiayu02/Dev/Repo/github/mini-react-native/examples/scripts/test_deviceinfo.js"  // 绝对路径
+    };
+
+    std::string testPath;
+    std::string testScript;
+
+    for (const auto& path : possibleTestPaths) {
+        testScript = readFile(path);
+        if (!testScript.empty()) {
+            testPath = path;
+            break;
+        }
+    }
 
     if (testScript.empty()) {
       std::cout << "[Error] Failed to load test file: " << testPath
@@ -117,7 +201,7 @@ void testIntegration() {
 
     executor.loadApplicationScript(testScript, testPath);
 
-    std::cout << "\n4. Bundle-based JavaScript Test Completed!" << std::endl;
+    std::cout << "\n5. Integration Test Completed!" << std::endl;
     std::cout
         << "   Check the JavaScript output above for detailed test results."
         << std::endl;
