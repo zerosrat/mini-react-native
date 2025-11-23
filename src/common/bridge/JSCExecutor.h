@@ -183,10 +183,6 @@ class JSCExecutor {
    */
   void setupGlobalObjects();
 
-  /**
-   * 设置 console 对象
-   */
-  void setupConsole();
 
   /**
    * 给 JS 注入 React Native Bridge 的核心函数

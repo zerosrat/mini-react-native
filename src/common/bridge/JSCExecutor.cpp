@@ -1,7 +1,6 @@
 #include "JSCExecutor.h"
 
 #include <iostream>
-#include <sstream>
 
 #include "../utils/JSONParser.h"
 
@@ -95,49 +94,10 @@ void JSCExecutor::setupGlobalObjects() {
                       kJSPropertyAttributeReadOnly, nullptr);
   JSStringRelease(devName);
 
-  // JS 引擎是没有 console 对象的，需要宿主环境如浏览器或 Node.js 提供
-  // 设置基础的 console 对象
-  setupConsole();
+  // Console 对象现在通过 JavaScript 端的 console.js 提供
+  // 使用 nativeLoggingHook 进行实际的日志输出
 }
 
-void JSCExecutor::setupConsole() {
-  // 创建 console 对象
-  // JSObjectMake Creates a JavaScript object.
-  JSObjectRef consoleObj = JSObjectMake(m_context, nullptr, nullptr);
-
-  // 添加 console.log 函数
-  JSStringRef logName = JSStringCreateWithUTF8CString("log");
-  JSObjectRef logFunc = JSObjectMakeFunctionWithCallback(
-      m_context, logName,
-      [](JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject,
-         size_t argumentCount, const JSValueRef arguments[],
-         JSValueRef *exception) -> JSValueRef {
-        // 避免未使用参数的警告
-        (void)function;
-        (void)thisObject;
-
-        std::ostringstream oss;
-        oss << "[JS LOG] ";
-
-        for (size_t i = 0; i < argumentCount; ++i) {
-          if (i > 0) oss << " ";
-          oss << convertJSValueToString(ctx, arguments[i]);
-        }
-
-        std::cout << oss.str() << std::endl;
-        return JSValueMakeUndefined(ctx);
-      });
-
-  JSObjectSetProperty(m_context, consoleObj, logName, logFunc,
-                      kJSPropertyAttributeNone, nullptr);
-  JSStringRelease(logName);
-
-  // 将 console 对象添加到全局
-  JSStringRef consoleName = JSStringCreateWithUTF8CString("console");
-  JSObjectSetProperty(m_context, m_globalObject, consoleName, consoleObj,
-                      kJSPropertyAttributeNone, nullptr);
-  JSStringRelease(consoleName);
-}
 
 void JSCExecutor::installBridgeFunctions() {
   // 注入关键的 Bridge 通信函数

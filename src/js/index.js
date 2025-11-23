@@ -5,11 +5,15 @@
  * 负责按正确的顺序加载和初始化所有核心模块。
  *
  * 加载顺序至关重要：
+ * 0. Console - 控制台实现（必须最先加载）
  * 1. MessageQueue - 核心通信队列
  * 2. BatchedBridge - 桥接器（依赖 MessageQueue）
  * 3. NativeModule - 原生模块系统（依赖 BatchedBridge）
  * 4. DeviceInfo - 具体的原生模块（依赖 NativeModule）
  */
+
+// 0. 首先加载 console 实现（在任何 console.log 调用之前）
+const console = require('./console')
 
 console.log('[MiniReactNative] Starting JavaScript module system initialization...')
 
