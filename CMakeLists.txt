@@ -133,7 +133,13 @@ target_include_directories(test_module_framework PRIVATE src)
 target_link_libraries(test_module_framework mini_react_native)
 
 # 集成测试可执行文件（使用打包后的 JavaScript bundle）
-add_executable(test_integration examples/test_integration.cpp)
+if(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+    # iOS版本需要包含Objective-C helper文件
+    add_executable(test_integration examples/test_integration.cpp examples/ios_bundle_helper.m)
+else()
+    # 其他平台只需要C++文件
+    add_executable(test_integration examples/test_integration.cpp)
+endif()
 target_include_directories(test_integration PRIVATE src)
 target_link_libraries(test_integration mini_react_native)
 
@@ -141,6 +147,25 @@ target_link_libraries(test_integration mini_react_native)
 add_executable(test_performance examples/test_performance.cpp)
 target_include_directories(test_performance PRIVATE src)
 target_link_libraries(test_performance mini_react_native)
+
+# iOS 特定配置：复制 JavaScript bundle 到应用包
+if(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+    # 为 test_integration 添加 bundle.js 资源复制
+    add_custom_command(TARGET test_integration POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/dist/bundle.js"
+        "$<TARGET_FILE_DIR:test_integration>/bundle.js"
+        COMMENT "Copying JavaScript bundle to iOS app package"
+    )
+
+    # 为 test_integration 添加测试脚本复制
+    add_custom_command(TARGET test_integration POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/examples/scripts/test_deviceinfo.js"
+        "$<TARGET_FILE_DIR:test_integration>/test_deviceinfo.js"
+        COMMENT "Copying test script to iOS app package"
+    )
+endif()
 
 
 # 安装配置（make install 时才会执行）

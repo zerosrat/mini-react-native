@@ -4,12 +4,46 @@
 #include <sstream>
 #include <vector>
 
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE
+// iOS特定声明，实现在单独的文件中
+extern "C" {
+    const char* getBundlePath();
+    const char* getResourcePath(const char* resourceName);
+}
+#endif
+#endif
+
 #include "common/bridge/JSCExecutor.h"
 #include "common/modules/DeviceInfoModule.h"
 #include "common/modules/ModuleRegistry.h"
 
 using namespace mini_rn::bridge;
 using namespace mini_rn::modules;
+
+#ifdef __APPLE__
+#if TARGET_OS_IPHONE
+/**
+ * 获取iOS应用包路径
+ * @return iOS应用包的完整路径
+ */
+std::string getMainBundlePath() {
+  const char* path = getBundlePath();
+  return path ? std::string(path) : "";
+}
+
+/**
+ * 获取iOS应用包内资源路径
+ * @param resourceName 资源文件名
+ * @return 资源文件的完整路径
+ */
+std::string getBundleResourcePath(const std::string& resourceName) {
+  const char* path = getResourcePath(resourceName.c_str());
+  return path ? std::string(path) : "";
+}
+#endif
+#endif
 
 /**
  * Mini React Native - 端到端集成测试
@@ -91,28 +125,49 @@ void testIntegration() {
     // 加载打包后的 JavaScript bundle
     std::cout << "\n3. Loading JavaScript bundle..." << std::endl;
 
-    // 尝试多个可能的路径（支持不同的工作目录）
-    std::vector<std::string> possiblePaths = {
+    // 构建路径列表，iOS优先使用bundle路径
+    std::vector<std::string> possiblePaths;
+
+#ifdef __APPLE__
+#if TARGET_OS_IPHONE
+    // iOS: 优先尝试应用包内的bundle.js
+    std::string bundleResourcePath = getBundleResourcePath("bundle.js");
+    if (!bundleResourcePath.empty()) {
+        possiblePaths.push_back(bundleResourcePath);
+        std::cout << "   [iOS] Found bundle resource path: " << bundleResourcePath << std::endl;
+    }
+
+    // iOS: 也尝试应用包根目录
+    std::string appBundlePath = getMainBundlePath();
+    if (!appBundlePath.empty()) {
+        possiblePaths.push_back(appBundlePath + "/bundle.js");
+        std::cout << "   [iOS] Bundle path: " << appBundlePath << std::endl;
+    }
+#endif
+#endif
+
+    // 通用路径（适用于macOS和iOS fallback）
+    possiblePaths.insert(possiblePaths.end(), {
+        "bundle.js",             // 当前目录
         "dist/bundle.js",        // 项目根目录
         "./dist/bundle.js",      // 从 build 目录
         "../dist/bundle.js",     // 从 build 目录
         "../../dist/bundle.js",  // 从深层目录
+    });
 
-    };
-
-    std::string bundlePath;
+    std::string foundBundlePath;
     std::string bundleScript;
 
     for (const auto& path : possiblePaths) {
       bundleScript = readFile(path);
       if (!bundleScript.empty()) {
-        bundlePath = path;
+        foundBundlePath = path;
         break;
       }
     }
 
     if (bundleScript.empty()) {
-      std::cout << "[Error] Failed to load JavaScript bundle: " << bundlePath
+      std::cout << "[Error] Failed to load JavaScript bundle: " << foundBundlePath
                 << std::endl;
       std::cout << "        Make sure you have run 'make js-build' first."
                 << std::endl;
@@ -123,19 +178,38 @@ void testIntegration() {
               << " bytes)" << std::endl;
 
     // 执行打包后的 JavaScript bundle
-    executor.loadApplicationScript(bundleScript, bundlePath);
+    executor.loadApplicationScript(bundleScript, foundBundlePath);
     std::cout << "   ✓ Bundle executed successfully" << std::endl;
 
     // 加载测试文件
     std::cout << "\n4. Loading DeviceInfo integration test..." << std::endl;
 
-    // 尝试多个可能的测试脚本路径
-    std::vector<std::string> possibleTestPaths = {
+    // 构建测试脚本路径列表，iOS优先使用bundle路径
+    std::vector<std::string> possibleTestPaths;
+
+#ifdef __APPLE__
+#if TARGET_OS_IPHONE
+    // iOS: 优先尝试应用包内的测试脚本
+    std::string testResourcePath = getBundleResourcePath("test_deviceinfo.js");
+    if (!testResourcePath.empty()) {
+        possibleTestPaths.push_back(testResourcePath);
+        std::cout << "   [iOS] Found test resource path: " << testResourcePath << std::endl;
+    }
+
+    // iOS: 也尝试应用包根目录
+    if (!appBundlePath.empty()) {
+        possibleTestPaths.push_back(appBundlePath + "/test_deviceinfo.js");
+    }
+#endif
+#endif
+
+    // 通用路径（适用于macOS和iOS fallback）
+    possibleTestPaths.insert(possibleTestPaths.end(), {
         "examples/scripts/test_deviceinfo.js",        // 项目根目录
         "./examples/scripts/test_deviceinfo.js",      // 从 build 目录
         "../examples/scripts/test_deviceinfo.js",     // 从 build 目录
         "../../examples/scripts/test_deviceinfo.js",  // 从深层目录
-    };
+    });
 
     std::string testPath;
     std::string testScript;
