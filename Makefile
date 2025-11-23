@@ -97,6 +97,8 @@ test: build
 	@./$(BUILD_DIR)/test_module_framework
 	@echo "\n📝 Test 3: Integration test"
 	@./$(BUILD_DIR)/test_integration
+	@echo "\n📝 Test 4: Performance test"
+	@./$(BUILD_DIR)/test_performance
 	@echo "\n✅ All tests complete"
 
 # 运行基础测试
@@ -119,6 +121,13 @@ test-integration: build
 	@echo "🧪 Running integration test..."
 	@./$(BUILD_DIR)/test_integration
 	@echo "✅ Integration test complete"
+
+# 运行性能测试
+.PHONY: test-performance
+test-performance: build
+	@echo "🧪 Running performance test..."
+	@./$(BUILD_DIR)/test_performance
+	@echo "✅ Performance test complete"
 
 # 清理构建文件
 .PHONY: clean
@@ -206,6 +215,7 @@ help:
 	@echo "  make test-basic       - 仅运行基础功能测试"
 	@echo "  make test-module      - 仅运行模块框架测试"
 	@echo "  make test-integration - 仅运行集成测试"
+	@echo "  make test-performance - 仅运行性能测试"
 	@echo ""
 	@echo "开发工具:"
 	@echo "  make install-deps     - 安装开发依赖"
