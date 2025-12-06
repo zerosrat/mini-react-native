@@ -51,3 +51,10 @@ config.local.*
 # Backup files
 *.bak
 *.backup
+
+# Android
+.idea/
+*.iml
+*.keystore
+*.jks
+.gradle/

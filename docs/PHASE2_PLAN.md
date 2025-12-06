@@ -51,57 +51,60 @@
 
 **目标：** 实现 Android 平台的完整支持，通过 JNI 集成 JavaScriptCore
 
-**架构约束：**
+**技术选型：**
+- JavaScript引擎：react-native-community/jsc-android-buildscripts (社区维护版本)
+- 构建系统：Android Studio + Gradle + CMake
+- 开发策略：平衡方案 - 核心功能 + 完整构建系统
 
-- 使用 JSC 的移植版本（如 facebook/android-jsc）
-- 通过 JNI 桥接 C++ 和 Java/Kotlin 代码
-- 保持与 iOS/macOS 的 API 一致性
+#### 子任务 2.1: 构建系统与 JSC 集成 (第1天)
 
-#### 子任务 2.1: Android 构建系统搭建 (1.5天)
+- [ ] **Android Studio 项目搭建 (4小时)**
+  - 创建 Gradle 项目结构
+  - 配置多架构支持（arm64-v8a, armeabi-v7a）
+  - 设置 NDK + CMake 集成
 
-- [ ] **Gradle 项目结构**
-  - 创建 Android 项目基础结构
-  - 配置 CMake 与 Gradle 的集成
-  - 设置 NDK 构建配置
+- [ ] **JavaScriptCore 集成 (6小时)**
+  - 集成 react-native-community/jsc-android-buildscripts
+  - 配置 CMakeLists.txt Android 部分
+  - 实现 JSCExecutor Android 适配
 
-- [ ] **JavaScriptCore 移植版本集成**
-  - 集成 facebook/android-jsc 或类似的 JSC 移植版本
-  - 配置 JSC 库的链接和依赖
-  - 验证 JSC API 在 Android 上的可用性
+- [ ] **JNI 桥接基础 (2小时)**
+  - 设计 JNI 接口
+  - 实现 JNIHelper 工具类
+  - 创建基础 Java 封装
 
-- [ ] **JNI 桥接层设计**
-  ```cpp
-  // JNI 接口设计
-  extern "C" {
-      JNIEXPORT void JNICALL Java_com_minirn_JSCExecutor_initializeContext(JNIEnv* env, jobject obj);
-      JNIEXPORT void JNICALL Java_com_minirn_JSCExecutor_loadScript(JNIEnv* env, jobject obj, jstring script);
-      JNIEXPORT void JNICALL Java_com_minirn_JSCExecutor_destroyContext(JNIEnv* env, jobject obj);
-  }
-  ```
+#### 子任务 2.2: Native 模块与 Bridge 实现 (第2天)
 
-#### 子任务 2.2: Android Native 层实现 (1天)
+- [ ] **Android DeviceInfo 模块 (4小时)**
+  - 实现 Android 设备信息获取
+  - 使用 Android API：ANDROID_ID, Build.VERSION, Build.MODEL
+  - 保持与现有实现的接口兼容性
 
-- [ ] **JSCExecutor Android 适配**
-  - 适配现有的 JSCExecutor 到 Android 环境
-  - 处理 Android 特定的内存管理
-  - 确保线程安全（Android 主线程 vs Native 线程）
+- [ ] **Bridge 通信实现 (6小时)**
+  - 实现 Android 特定的 Bridge 消息处理
+  - 确保消息格式与现有实现兼容
+  - 添加 Android 特定的错误处理
 
-- [ ] **Android DeviceInfo 模块**
-  - 实现 Android 版本的设备信息获取
-  - 通过 JNI 调用 Android API
-  - 返回正确的 Android 设备数据
+- [ ] **模块注册集成 (2小时)**
+  - 适配 ModuleRegistry Android 线程模型
+  - 确保线程安全的模块调用
 
-#### 子任务 2.3: Android Java 层实现 (0.5天)
+#### 子任务 2.3: Java 层与集成测试 (第3天)
 
-- [ ] **Java/Kotlin 封装层**
-  - 创建 JSCExecutor 的 Java 封装类
-  - 实现 DeviceInfo 的 Android API 调用
-  - 建立 Java 到 Native 的调用桥梁
+- [ ] **Java 封装实现 (4小时)**
+  - 完成 JSCExecutor.java 包装类
+  - 实现 MiniRNBridge.java 生命周期管理
+  - 创建 MainActivity.java 演示应用
 
-- [ ] **Android 应用示例**
-  - 创建简单的 Android 应用示例
-  - 集成 Mini React Native 库
-  - 验证基础功能正常工作
+- [ ] **跨平台测试集成 (4小时)**
+  - 扩展现有测试基础设施支持 Android
+  - 运行 DeviceInfo 集成测试
+  - 验证三平台 API 一致性
+
+- [ ] **文档与构建集成 (4小时)**
+  - 更新 CMakeLists.txt Android 配置
+  - 创建 Android 构建文档
+  - 性能基准测试和优化
 
 ### 任务3: 跨平台测试与验证
 
