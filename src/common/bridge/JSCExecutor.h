@@ -14,8 +14,8 @@
   // Apple 平台：使用系统内置的 JavaScriptCore
   #include <JavaScriptCore/JavaScriptCore.h>
 #elif __ANDROID__
-  // Android 平台：使用移植的 JavaScriptCore
-  #include <jsc/jsc.h>
+  // Android 平台：使用移植的 JavaScriptCore (org.webkit:android-jsc)
+  #include <JavaScriptCore/JavaScriptCore.h>
 #else
   #error "Unsupported platform"
 #endif
@@ -255,6 +255,32 @@ class JSCExecutor {
    * @param message 解析后的Bridge消息
    */
   void processBridgeMessage(const mini_rn::bridge::BridgeMessage &message);
+
+  /**
+   * 平台特定方法（由平台特定的实现文件提供）
+   */
+
+  /**
+   * 平台特定初始化
+   */
+  void platformSpecificInit();
+
+  /**
+   * 平台特定日志输出
+   * @param message 日志消息
+   */
+  void platformSpecificLog(const std::string& message);
+
+  /**
+   * 平台特定错误处理
+   * @param error 错误消息
+   */
+  void platformSpecificError(const std::string& error);
+
+  /**
+   * 平台特定内存警告处理
+   */
+  void platformSpecificMemoryWarning();
 };
 
 }  // namespace bridge

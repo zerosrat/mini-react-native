@@ -46,8 +46,29 @@ if(APPLE)
     set_source_files_properties(${PLATFORM_SOURCES}
         PROPERTIES COMPILE_FLAGS "-fobjc-arc")
 elseif(ANDROID)
+    message(STATUS "Building for Android with API level: ${ANDROID_PLATFORM}")
+
+    # 使用 Maven JSC 库 (org.webkit:android-jsc)
+    # 库由 Gradle 管理，我们只需要设置库名
+    set(JAVASCRIPTCORE_LIB "jsc")
+    message(STATUS "Using JSC library: ${JAVASCRIPTCORE_LIB}")
+
+    # 使用项目内置的 JSC 头文件
+    set(JSC_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/third_party/jsc-headers")
+
+    # 验证关键头文件存在
+    if(EXISTS "${JSC_INCLUDE_DIR}/JavaScriptCore/JSBase.h")
+        message(STATUS "Found JSC headers: ${JSC_INCLUDE_DIR}")
+        include_directories(${JSC_INCLUDE_DIR})
+    else()
+        message(FATAL_ERROR "JSC headers not found at: ${JSC_INCLUDE_DIR}")
+    endif()
+
+    # Android 特定源文件
     set(PLATFORM_SOURCES
-        # src/android/modules/deviceinfo/DeviceInfoModule.cpp  # 未来添加
+        src/android/bridge/JSCExecutorAndroid.cpp
+        src/android/modules/deviceinfo/DeviceInfoModule.cpp
+        src/android/jni/com_minirn_JSCExecutor.cpp
     )
 endif()
 
@@ -57,8 +78,8 @@ set(ALL_SOURCES
     ${PLATFORM_SOURCES}
 )
 
-# 创建静态库
-add_library(mini_react_native STATIC ${ALL_SOURCES})
+# 创建动态库（用于 Android JNI）
+add_library(mini_react_native SHARED ${ALL_SOURCES})
 
 # 平台特定配置
 if(APPLE)
@@ -111,8 +132,20 @@ if(APPLE)
     endif()
 
 elseif(ANDROID)
-    # Android 配置 (未来实现)
-    message(STATUS "Android build configuration - TODO")
+    # Android 配置
+    message(STATUS "Configuring Android build with JSC library")
+
+    # 使用 intl 变体时，JSC 库由 Gradle 自动管理，不需要手动链接
+    message(STATUS "Using JSC intl variant - library will be included by Gradle")
+
+    # 链接 Android 特定库（不包括 JSC）
+    # 添加 undefined symbols 引用，让动态链接器在运行时解析
+    target_link_libraries(mini_react_native
+        android
+        log
+        -Wl,--undefined
+        -Wl,--allow-shlib-undefined
+    )
 
 elseif(WIN32)
     # Windows 配置 (未来实现)
