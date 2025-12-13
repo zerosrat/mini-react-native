@@ -135,7 +135,7 @@ target_link_libraries(test_module_framework mini_react_native)
 # 集成测试可执行文件（使用打包后的 JavaScript bundle）
 if(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
     # iOS版本需要包含Objective-C helper文件
-    add_executable(test_integration examples/test_integration.cpp examples/ios_bundle_helper.m)
+    add_executable(test_integration examples/test_integration.cpp examples/ios_bundle_helper.mm)
 else()
     # 其他平台只需要C++文件
     add_executable(test_integration examples/test_integration.cpp)
