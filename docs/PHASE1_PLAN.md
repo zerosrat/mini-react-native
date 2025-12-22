@@ -12,6 +12,33 @@
 - ✅ 通信性能达到可接受水平
 - ✅ 建立真实的 JavaScriptCore 执行环境和通信机制
 
+**核心约束：**
+
+1. **架构思路与 RN 保持一致**
+   - 遵循官方 RN Bridge 的设计模式和数据流向
+   - JavaScript ↔ Native 通信必须基于异步消息队列
+   - 模块注册和方法导出方式与 RN 保持一致
+
+2. **具体实现可以简化**
+   - 在保持架构思路一致的前提下，实现细节可以更简单
+   - 减少复杂的优化和边缘情况处理
+   - 专注核心流程，忽略生产级的健壮性要求
+
+### 关键组件对应关系
+
+| 组件 | React Native 原版 | Mini 实现 | 一致性要求 |
+|------|------------------|-----------|------------|
+| **JSCExecutor** | JSCExecutor.cpp | 简化版 JSCExecutor | JavaScript 上下文管理方式一致 |
+| **MessageQueue** | MessageQueue.js | 简化版 MessageQueue | 消息格式和队列机制一致 |
+| **NativeModule** | NativeModule.java/.mm | 简化版 NativeModule | 模块注册和方法调用方式一致 |
+
+### 兼容性目标
+
+- **消息格式兼容**: 能够处理标准 RN 的消息队列格式
+- **模块接口兼容**: Native 模块的导出方式与 RN 保持一致
+- **JavaScript 接口兼容**: 能够运行基础的 RN-style JavaScript 代码
+- **事件系统兼容**: 事件的注册、监听、分发与 RN 行为一致
+
 ## 📋 详细任务分解
 
 ### 任务1: 构建 RN 风格的 JSCExecutor

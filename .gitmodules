@@ -1,0 +1,3 @@
+[submodule "vibe-writing-workflow"]
+	path = vibe-writing-workflow
+	url = https://github.com/zerosrat/vibe-writing-workflow.git
