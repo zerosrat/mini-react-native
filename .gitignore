@@ -2,6 +2,7 @@
 build/
 dist/
 out/
+build_ios/
 
 # IDE and editor files
 .vscode/

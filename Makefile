@@ -53,6 +53,39 @@ build: js-build configure
 	@cd $(BUILD_DIR) && make -j$(CORES)
 	@echo "✅ Build complete"
 
+# iOS 构建配置（模拟器）
+.PHONY: ios-configure
+ios-configure:
+	@echo "🔧 Configuring iOS build system..."
+	@mkdir -p $(BUILD_DIR)_ios
+	@cd $(BUILD_DIR)_ios && DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer cmake \
+		-DCMAKE_SYSTEM_NAME=iOS \
+		-DCMAKE_OSX_ARCHITECTURES=$$(uname -m) \
+		-DCMAKE_OSX_SYSROOT=$$(DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun --sdk iphonesimulator --show-sdk-path) \
+		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+		-DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+		..
+	@echo "✅ iOS configuration complete"
+
+# 构建 iOS 版本（模拟器）
+.PHONY: ios-build
+ios-build: js-build ios-configure
+	@echo "🔨 Building Mini React Native for iOS..."
+	@cd $(BUILD_DIR)_ios && make -j$(CORES)
+	@echo "✅ iOS build complete"
+
+# iOS 测试目标
+.PHONY: ios-test
+ios-test: ios-build
+	@echo "🍎 Running iOS tests..."
+	@./test_ios.sh all
+
+# iOS DeviceInfo 测试
+.PHONY: ios-test-deviceinfo
+ios-test-deviceinfo: ios-build
+	@echo "🍎 Running iOS DeviceInfo test..."
+	@./test_ios.sh deviceinfo
+
 # 运行测试
 # 执行顺序：configure → build → test
 .PHONY: test
@@ -64,6 +97,8 @@ test: build
 	@./$(BUILD_DIR)/test_module_framework
 	@echo "\n📝 Test 3: Integration test"
 	@./$(BUILD_DIR)/test_integration
+	@echo "\n📝 Test 4: Performance test"
+	@./$(BUILD_DIR)/test_performance
 	@echo "\n✅ All tests complete"
 
 # 运行基础测试
@@ -87,11 +122,18 @@ test-integration: build
 	@./$(BUILD_DIR)/test_integration
 	@echo "✅ Integration test complete"
 
+# 运行性能测试
+.PHONY: test-performance
+test-performance: build
+	@echo "🧪 Running performance test..."
+	@./$(BUILD_DIR)/test_performance
+	@echo "✅ Performance test complete"
+
 # 清理构建文件
 .PHONY: clean
 clean: js-clean
 	@echo "🧹 Cleaning build files..."
-	@rm -rf $(BUILD_DIR)
+	@rm -rf $(BUILD_DIR) $(BUILD_DIR)_ios
 	@echo "✅ Clean complete"
 
 # 完全重建
@@ -160,11 +202,20 @@ help:
 	@echo "  make rebuild          - 完全重新构建"
 	@echo "  make configure        - 仅配置 CMake"
 	@echo ""
+	@echo "iOS 构建命令:"
+	@echo "  make ios-build        - 构建 iOS 版本（模拟器）"
+	@echo "  make ios-configure    - 仅配置 iOS 构建"
+	@echo ""
+	@echo "iOS 测试命令:"
+	@echo "  make ios-test         - 运行所有 iOS 测试"
+	@echo "  make ios-test-deviceinfo - 运行 iOS DeviceInfo 测试"
+	@echo ""
 	@echo "测试命令:"
 	@echo "  make test             - 运行所有测试"
 	@echo "  make test-basic       - 仅运行基础功能测试"
 	@echo "  make test-module      - 仅运行模块框架测试"
 	@echo "  make test-integration - 仅运行集成测试"
+	@echo "  make test-performance - 仅运行性能测试"
 	@echo ""
 	@echo "开发工具:"
 	@echo "  make install-deps     - 安装开发依赖"

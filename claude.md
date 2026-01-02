@@ -23,11 +23,6 @@
    - 尽快建立反馈循环，验证设计思路
    - 允许后续重构和改进
 
-4. **AI 协助开发** > 纯手工编码
-   - 利用 AI 生成大部分基础代码和样板代码
-   - 人工专注于架构设计和核心逻辑
-   - 显著提升开发效率，缩短实现周期
-
 ## 🔧 开发策略
 
 ### 质量标准
@@ -57,81 +52,84 @@
 
 具体的，桥架构版本参考 RN [v0.57.8](https://github.com/facebook/react-native/blob/0.57-stable/Libraries/BatchedBridge/MessageQueue.js)，这个版本只包含 Bridge 代码不包含 JSI 代码，便于学习和参考。
 
-**核心约束：**
+## 关键项目路径
 
-1. **架构思路与 RN 保持一致**
-   - 遵循官方 RN Bridge 的设计模式和数据流向
-   - JavaScript ↔ Native 通信必须基于异步消息队列
-   - 模块注册和方法导出方式与 RN 保持一致
+### 核心源码
 
-2. **具体实现可以简化**
-   - 在保持架构思路一致的前提下，实现细节可以更简单
-   - 减少复杂的优化和边缘情况处理
-   - 专注核心流程，忽略生产级的健壮性要求
+- `src/common/` - 跨平台核心代码（JSCExecutor、模块系统）
+- `src/js/` - JavaScript 实现（MessageQueue、NativeModule 等）
+- `src/macos/` - macOS 平台代码
+- `src/ios/` - iOS 平台代码
+- `src/android/` - Android 平台代码
 
-### 关键组件对应关系
+### 构建输出
 
-| 组件 | React Native 原版 | Mini 实现 | 一致性要求 |
-|------|------------------|-----------|------------|
-| **JSCExecutor** | JSCExecutor.cpp | 简化版 JSCExecutor | JavaScript 上下文管理方式一致 |
-| **MessageQueue** | MessageQueue.js | 简化版 MessageQueue | 消息格式和队列机制一致 |
-| **NativeModule** | NativeModule.java/.mm | 简化版 NativeModule | 模块注册和方法调用方式一致 |
-| **EventEmitter** | RCTEventEmitter | 简化版事件系统 | 事件分发机制一致 |
+- `build/` - macOS 构建目录
+- `build_ios/` - iOS 构建目录
+- `dist/bundle.js` - JavaScript 打包文件
 
-### 兼容性目标
+### 测试和示例
+- `examples/` - 测试用例和示例代码
 
-- **消息格式兼容**: 能够处理标准 RN 的消息队列格式
-- **模块接口兼容**: Native 模块的导出方式与 RN 保持一致
-- **JavaScript 接口兼容**: 能够运行基础的 RN-style JavaScript 代码
-- **事件系统兼容**: 事件的注册、监听、分发与 RN 行为一致
+### 关键配置
 
-## 📅 时间管理
+- `CMakeLists.txt` - CMake 构建配置
+- `Makefile` - 构建自动化脚本
+- `package.json` - Node.js 依赖
+- `rollup.config.js` - JavaScript 打包配置
 
-### 总体目标
+## 命令
 
-- **阶段1 (Bridge通信)**: 7-10天 (而非原计划的 19-27天)
-- **快速原型**: 2-3天内建立基础通信
-- **功能完善**: 4-5天完善核心功能
-- **验证测试**: 1-2天集成测试
+### 构建命令
 
-### 里程碑设定
+```bash
+make build              # 编译项目（默认包含 JS 构建）
+make js-build           # 仅构建 JavaScript bundle
+make js-watch           # 监听 JS 文件并自动重建
+make clean              # 清理所有构建文件
+make js-clean           # 仅清理 JavaScript 构建文件
+make rebuild            # 完全清理重建
+make configure          # 仅配置 CMake
+```
 
-每个里程碑都应该有可演示的成果：
-- **M1**: JavaScript 能调用一个 Native 函数并获得返回值
-- **M2**: Native 能向 JavaScript 发送事件
-- **M3**: 完整的 DeviceInfo 模块演示
-- **M4**: 性能基准和文档总结
+### iOS 构建命令
 
-## 🚀 成功标准
+```bash
+make ios-build          # 为 iOS 模拟器构建
+make ios-configure      # 仅配置 iOS 构建
+```
 
-### 最小成功标准 (Must Have)
+### macos 测试命令
 
-- [x] JavaScript ↔ Native 双向通信正常工作
-- [x] 至少一个完整的 Native 模块实现 (DeviceInfo)
-- [x] 基础的错误处理机制
-- [x] 可运行的端到端演示
+```bash
+make test               # 运行所有测试（基础、模块、集成、性能）
+make test-basic         # 仅基础功能测试
+make test-module        # 仅模块框架测试
+make test-integration   # 仅集成测试
+make test-performance   # 仅性能测试
+make ios-test           # 运行所有 iOS 测试
+make ios-test-deviceinfo # 仅运行 iOS DeviceInfo 测试
+```
 
-### 期望标准 (Should Have)
+### iOS 测试
 
-- [x] 性能达到可接受水平 (< 10ms 调用延迟)
-- [x] 事件系统正常工作
-- [x] 基础的调试和日志功能
-- [x] 与 React Native 行为对比分析
+`docs/iOS_TESTING.md`
 
-### 理想标准 (Could Have)
+### 构建系统详情
 
-- [x] 多平台支持 (macOS + iOS)
-- [x] 性能优化和内存管理
-- [x] 完整的文档和教程
-- [x] 开源社区反馈
+- 构建类型：基于 CMake（3.15+）
+- 编译器：Clang++（C++17 标准）
+- 构建目录：`build/`（macOS）、`build_ios/`（iOS）
+- 并行构建：自动使用系统 CPU 核心数
+- 部署目标：macOS 10.15+、iOS 12.0+
+
+## 关键文档索引
+
+- 路线图：`docs/ROADMAP.md`
+- 阶段一规划：`docs/PHASE1_PLAN.md`
+- 阶段二规划：`docs/PHASE2_PLAN.md`
 
 ## 📝 文档输出
-
-### 必需文档
-
-1. **实现文档**: 记录关键技术决策和实现细节
-2. **使用指南**: 如何构建、运行和测试项目
-3. **对比分析**: 与官方 React Native 的差异分析
 
 ### 期望文档
 
