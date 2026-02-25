@@ -124,11 +124,16 @@ show_help() {
     echo "  deviceinfo   - DeviceInfo 模块测试"
     echo "  module       - 模块框架测试"
     echo "  integration  - 完整集成测试"
+    echo "  shadow       - Shadow Tree 虚拟 DOM 测试"
+    echo "  uimanager    - UIManager 简单测试"
+    echo "  uimanager-int - UIManager 集成测试"
     echo "  all          - 运行所有测试"
     echo "  list         - 列出可用的模拟器"
     echo
     echo -e "${YELLOW}示例:${NC}"
     echo "  $0 deviceinfo                    # 在默认模拟器上运行 DeviceInfo 测试"
+    echo "  $0 shadow                        # 运行 Shadow Tree 虚拟 DOM 测试"
+    echo "  $0 uimanager                     # 运行 UIManager 简单测试"
     echo "  $0 all \"iPhone 15 Pro\"          # 在指定模拟器上运行所有测试"
     echo "  $0 list                          # 列出可用模拟器"
     echo
@@ -164,6 +169,21 @@ run_all_tests() {
 
     # 模块框架测试
     if ! run_test "模块框架" "./build_ios/test_module_framework.app/test_module_framework" "验证模块注册和调用机制"; then
+        ((failed_tests++))
+    fi
+
+    # Shadow Tree 测试
+    if ! run_test "Shadow Tree" "./build_ios/test_shadow_node.app/test_shadow_node" "验证 Shadow Tree 虚拟 DOM 机制"; then
+        ((failed_tests++))
+    fi
+
+    # UIManager 简单测试
+    if ! run_test "UIManager (简单)" "./build_ios/test_ui_manager_simple.app/test_ui_manager_simple" "验证 UIManager 基础功能"; then
+        ((failed_tests++))
+    fi
+
+    # UIManager 集成测试
+    if ! run_test "UIManager (集成)" "./build_ios/test_ui_manager_integration.app/test_ui_manager_integration" "验证 UIManager 完整集成功能"; then
         ((failed_tests++))
     fi
 
@@ -215,6 +235,27 @@ main() {
             check_simulator
             boot_simulator
             run_test "集成测试" "./build_ios/test_integration.app/test_integration" "完整 JavaScript ↔ Native 通信测试"
+            ;;
+        "shadow")
+            print_header
+            check_ios_build
+            check_simulator
+            boot_simulator
+            run_test "Shadow Tree" "./build_ios/test_shadow_node.app/test_shadow_node" "验证 Shadow Tree 虚拟 DOM 机制"
+            ;;
+        "uimanager")
+            print_header
+            check_ios_build
+            check_simulator
+            boot_simulator
+            run_test "UIManager (简单)" "./build_ios/test_ui_manager_simple.app/test_ui_manager_simple" "验证 UIManager 基础功能"
+            ;;
+        "uimanager-int")
+            print_header
+            check_ios_build
+            check_simulator
+            boot_simulator
+            run_test "UIManager (集成)" "./build_ios/test_ui_manager_integration.app/test_ui_manager_integration" "验证 UIManager 完整集成功能"
             ;;
         "all")
             run_all_tests
