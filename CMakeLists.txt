@@ -26,7 +26,11 @@ set(COMMON_SOURCES
     src/common/bridge/JSCExecutor.cpp
     src/common/modules/ModuleRegistry.cpp
     src/common/modules/NativeModule.cpp
+    src/common/modules/UIManager.cpp
     src/common/utils/JSONParser.cpp
+    src/common/view/ShadowNode.cpp
+    src/common/view/ShadowNodeImpl.cpp
+    src/common/view/ShadowTree.cpp
 )
 
 # 平台特定源文件
@@ -147,6 +151,21 @@ target_link_libraries(test_integration mini_react_native)
 add_executable(test_performance examples/test_performance.cpp)
 target_include_directories(test_performance PRIVATE src)
 target_link_libraries(test_performance mini_react_native)
+
+# Shadow Tree 测试可执行文件
+add_executable(test_shadow_node examples/test_shadow_node.cpp)
+target_include_directories(test_shadow_node PRIVATE src)
+target_link_libraries(test_shadow_node mini_react_native)
+
+# UIManager 集成测试可执行文件
+add_executable(test_ui_manager_integration examples/test_ui_manager_integration.cpp)
+target_include_directories(test_ui_manager_integration PRIVATE src)
+target_link_libraries(test_ui_manager_integration mini_react_native)
+
+# UIManager 简单测试可执行文件
+add_executable(test_ui_manager_simple examples/test_ui_manager_simple.cpp)
+target_include_directories(test_ui_manager_simple PRIVATE src)
+target_link_libraries(test_ui_manager_simple mini_react_native)
 
 # iOS 特定配置：复制 JavaScript bundle 到应用包
 if(${CMAKE_SYSTEM_NAME} MATCHES "iOS")

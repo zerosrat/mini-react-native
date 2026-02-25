@@ -33,6 +33,10 @@ console.log('[MiniReactNative] NativeModule system loaded')
 const DeviceInfo = require('./DeviceInfo')
 console.log('[MiniReactNative] DeviceInfo module loaded')
 
+// 5. 加载 UIManager
+const UIManager = require('./UIManager')
+console.log('[MiniReactNative] UIManager module loaded')
+
 // 将关键模块暴露到全局环境，保持与原有系统的兼容性
 // 这样 C++ 端可以继续使用 global.__fbBatchedBridge 等接口
 if (typeof global !== 'undefined') {
@@ -50,6 +54,9 @@ if (typeof global !== 'undefined') {
   // 设置 DeviceInfo 为全局可访问（便于测试）
   global.DeviceInfo = DeviceInfo
 
+  // 设置 UIManager 为全局可访问
+  global.UIManager = UIManager
+
   console.log('[MiniReactNative] Global objects set up successfully')
 }
 
@@ -59,6 +66,7 @@ module.exports = {
   BatchedBridge,
   NativeModules,
   DeviceInfo,
+  UIManager,
 
   // 提供版本信息
   version: '1.0.0',
@@ -70,6 +78,7 @@ module.exports = {
       batchedBridgeReady: !!BatchedBridge && !!global.__fbBatchedBridge,
       nativeModulesReady: !!NativeModules,
       deviceInfoReady: !!DeviceInfo,
+      uiManagerReady: !!UIManager,
       bridgeConfigReady: !!global.__fbBatchedBridgeConfig
     }
   }
