@@ -78,10 +78,14 @@ std::vector<int> UIManager::parseJSONArray(const std::string& json) const {
     item.erase(item.find_last_not_of(" \t\n\r\f\v") + 1);
 
     if (!item.empty()) {
-      try {
-        result.push_back(std::stoi(item));
-      } catch (const std::exception& e) {
-        std::cerr << "[UIManager] Failed to parse integer: " << item << std::endl;
+      // 只尝试解析纯数字
+      if (std::all_of(item.begin(), item.end(), ::isdigit) ||
+          (item[0] == '-' && std::all_of(item.begin() + 1, item.end(), ::isdigit))) {
+        try {
+          result.push_back(std::stoi(item));
+        } catch (const std::exception& e) {
+          // 忽略解析错误，继续处理下一个
+        }
       }
     }
   }
@@ -90,13 +94,13 @@ std::vector<int> UIManager::parseJSONArray(const std::string& json) const {
 }
 
 std::string UIManager::parseProps(const std::string& args) const {
-  // 简单解析：假设 args 是 JSON 数组，props 在第二个位置
+  // 简单解析：假设 args 是 JSON 数组，props 在第三个位置
   // 格式: [tag, className, props, rootViewTag]
   if (args.empty() || args == "null") {
     return "{}";
   }
 
-  // 查找第二个元素（props）
+  // 查找第三个元素（props）
   size_t start = 0;
   int count = 0;
   bool inString = false;
@@ -114,22 +118,26 @@ std::string UIManager::parseProps(const std::string& args) const {
       escapeNext = true;
     } else if (c == '"') {
       inString = !inString;
-    } else if (!inString && (c == ',' || c == '[')) {
-      if (c == ',') {
-        count++;
-        if (count == 2) {
-          start = i + 1;
-          break;
-        }
+    } else if (!inString && c == ',') {
+      count++;
+      if (count == 2) { // 第二个逗号后是 props
+        start = i + 1;
+        break;
       }
     }
   }
+
 
   // 找到 props 的开始，现在找到它的结束
   if (start == 0) {
     return "{}";
   }
 
+  // Skip whitespace and opening quote of the props string
+  while (start < args.length() && (args[start] == ' ' || args[start] == '\t')) start++;
+  if (start < args.length() && args[start] == '"') start++;
+
+  size_t propsStart = start;
   size_t end = start;
   int braceCount = 0;
   inString = false;
@@ -149,6 +157,9 @@ std::string UIManager::parseProps(const std::string& args) const {
       inString = !inString;
     } else if (!inString) {
       if (c == '{') {
+        if (braceCount == 0) {
+          propsStart = i;  // Actual props starts here
+        }
         braceCount++;
       } else if (c == '}') {
         braceCount--;
@@ -160,8 +171,8 @@ std::string UIManager::parseProps(const std::string& args) const {
     }
   }
 
-  if (end > start) {
-    return args.substr(start, end - start);
+  if (end > propsStart) {
+    return args.substr(propsStart, end - propsStart);
   }
 
   return "{}";
@@ -195,7 +206,12 @@ void UIManager::createView(const std::string& args) {
         std::string props = parseProps(args);
 
         // 创建节点
-        shadowTree_->createNode(tag, className, props);
+        auto node = shadowTree_->createNode(tag, className, props);
+
+        // 如果是根节点（tag=0），设置为根节点
+        if (tag == 0) {
+          shadowTree_->setRootNode(node);
+        }
 
         std::cout << "[UIManager] Created view: tag=" << tag
                   << ", className=" << className << std::endl;
